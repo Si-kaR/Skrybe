@@ -10,7 +10,7 @@
 - 📁 **Upload Audio/Video Files** for automatic transcription  
 - 🧠 **AI Features** – Smart formatting, sentiment analysis, and more  
 - 📄 **Export Transcripts** as PDF or TXT  
-- ☁️ **Cloud Sync** with Firebase (optional)  
+- ☁️ **Cloud Sync** with Firebase
 - 💾 **Offline Access** and background task support  
 - 🔔 **Push Notifications** for transcription status updates  
 - 🎨 **Modern UI & Fluid Interactions** following best UX practices
