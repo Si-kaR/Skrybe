@@ -1,0 +1,211 @@
+# This is a basic Flutter project template.
+# For more information on the structure of this file, see the following page:
+# https://dart.dev/tools/pub/pubspec
+# For more information on the structure of a Flutter project, see the following page:
+# https://flutter.dev/docs/development/packages-and-plugins/developing-packages
+# For more information on the structure of a Flutter app, see the following page:
+# https://flutter.dev/docs/development/ui/widgets-intro
+# For more information on the structure of a Flutter web app, see the following page:
+# https://flutter.dev/docs/development/ui/web-intro
+# For more information on the structure of a Flutter desktop app, see the following page:
+# https://flutter.dev/docs/development/ui/desktop-intro
+# For more information on the structure of a Flutter mobile app, see the following page:
+# https://flutter.dev/docs/development/ui/mobile-intro
+# For more information on the structure of a Flutter package, see the following page:
+# https://flutter.dev/docs/development/packages-and-plugins/developing-packages
+# For more information on the structure of a Flutter plugin, see the following page:
+# https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin
+# For more information on the structure of a Flutter app, see the following page:
+# https://flutter.dev/docs/development/ui/widgets-intro
+ 
+name: skrybe
+description: A powerful, beautiful, and complete mobile transcription app.
+publish_to: 'none'
+
+# name: skrybe
+# description: "A new Flutter project."
+# # The following line prevents the package from being accidentally published to
+# # pub.dev using `flutter pub publish`. This is preferred for private packages.
+# publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# # The following defines the version and build number for your application.
+# # A version number is three numbers separated by dots, like 1.2.43
+# # followed by an optional build number separated by a +.
+# # Both the version and the builder number may be overridden in flutter
+# # build by specifying --build-name and --build-number, respectively.
+# # In Android, build-name is used as versionName while build-number used as versionCode.
+# # Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# # In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# # Read more about iOS versioning at
+# # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# # In Windows, build-name is used as the major, minor, and patch parts
+# # of the product and file versions while build-number is used as the build suffix.
+# version: 1.0.0+1
+version: 1.0.0+1
+
+# environment:
+#   sdk: ^3.6.1
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+# # Dependencies specify other packages that your package needs in order to work.
+# # To automatically upgrade your package dependencies to the latest versions
+# # consider running `flutter pub upgrade --major-versions`. Alternatively,
+# # dependencies can be manually updated by changing the version numbers below to
+# # the latest version available on pub.dev. To see which dependencies have newer
+# # versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  # State Management
+  flutter_riverpod: ^2.3.6
+  riverpod_annotation: ^2.1.1
+  
+  # Firebase
+  firebase_core: ^2.13.1
+  firebase_auth: ^4.6.2
+  cloud_firestore: ^4.8.0
+  firebase_storage: ^11.2.2
+  firebase_messaging: ^14.6.2
+  
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.0.15
+  
+  # UI/UX
+  flutter_animate: ^4.1.1+1
+  flutter_svg: ^2.0.6
+  google_fonts: ^4.0.4
+  flutter_spinkit: ^5.2.0
+  lottie: ^2.3.2
+  shimmer: ^3.0.0
+  cached_network_image: ^3.2.3
+  
+  # Navigation
+  go_router: ^8.0.1
+  
+  # Audio/Video
+  record: ^4.4.4
+  just_audio: ^0.9.33
+  video_player: ^2.6.1
+  flutter_sound: ^9.2.13
+  permission_handler: ^10.2.0
+  file_picker: ^5.3.1
+  
+  # Utils
+  intl: ^0.18.1
+  http: ^0.13.6
+  url_launcher: ^6.1.11
+  share_plus: ^7.0.2
+  path: ^1.8.3
+  logger: ^1.3.0
+  dio: ^5.1.2
+  flutter_dotenv: ^5.0.2
+  uuid: ^3.0.7
+  equatable: ^2.0.5
+  flutter_markdown: ^0.6.15
+  pdf: ^3.10.1
+  printing: ^5.10.4
+  connectivity_plus: ^4.0.1
+  flutter_local_notifications: ^14.1.0
+  
+  # Theme
+  flex_color_scheme: ^7.1.2
+  flutter_displaymode: ^0.6.0
+  device_preview: ^1.1.0
+#   # The following adds the Cupertino Icons font to your application.
+#   # Use with the CupertinoIcons class for iOS style icons.
+#   cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+#   # The "flutter_lints" package below contains a set of recommended lints to
+#   # encourage good coding practices. The lint set provided by the package is
+#   # activated in the `analysis_options.yaml` file located at the root of your
+#   # package. See that file for information about deactivating specific lint
+#   # rules and activating additional ones.
+#   flutter_lints: ^5.0.0
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.4
+  riverpod_generator: ^2.2.3
+  hive_generator: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.0
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/splash_logo.png
+  color_dark: "#121212"
+  image_dark: assets/images/splash_logo_dark.png
+  android: true
+  ios: true
+# # For information on the generic Dart part of this file, see the
+# # following page: https://dart.dev/tools/pub/pubspec
+
+# # The following section is specific to Flutter packages.
+
+flutter:
+#   # The following line ensures that the Material Icons font is
+#   # included with your application, so that you can use the icons in
+#   # the material Icons class.
+#   uses-material-design: true
+  uses-material-design: true
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
+
+#   # To add assets to your application, add an assets section, like this:
+#   # assets:
+#   #   - images/a_dot_burr.jpeg
+#   #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/
+    - assets/animations/
+    - assets/icons/
+    - assets/fonts/
+
+#   # An image asset can refer to one or more resolution-specific "variants", see
+#   # https://flutter.dev/to/resolution-aware-images
+
+#   # For details regarding adding assets from package dependencies, see
+#   # https://flutter.dev/to/asset-from-package
+
+#   # To add custom fonts to your application, add a fonts section here,
+#   # in this "flutter" section. Each entry in this list should have a
+#   # "family" key with the font family name, and a "fonts" key with a
+#   # list giving the asset and other descriptors for the font. For
+#   # example:
+#   # fonts:
+#   #   - family: Schyler
+#   #     fonts:
+#   #       - asset: fonts/Schyler-Regular.ttf
+#   #       - asset: fonts/Schyler-Italic.ttf
+#   #         style: italic
+#   #   - family: Trajan Pro
+#   #     fonts:
+#   #       - asset: fonts/TrajanPro.ttf
+#   #       - asset: fonts/TrajanPro_Bold.ttf
+#   #         weight: 700
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+#   #
+#   # For details regarding fonts from package dependencies,
+#   # see https://flutter.dev/to/font-from-package
