@@ -1,5 +1,6 @@
 // lib/data/models/transcription_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:equatable/equatable.dart';
 import 'package:uuid/uuid.dart';
 
@@ -276,6 +277,7 @@ final transcriptionRepositoryProvider =
     FirebaseFirestore.instance,
     FirebaseStorage.instance,
     FirebaseAuth.instance,
+    FirebaseFunctions.instance,
   );
 });
 
@@ -375,143 +377,5 @@ class TranscriptionController extends StateNotifier<AsyncValue<void>> {
       print('Stack trace: $stackTrace');
       rethrow; // Re-throw the error to allow further handling if needed
     }
-  }
-}
-
-class TranscriptionRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
-  final FirebaseAuth _auth;
-  final TranscriptionService _transcriptionService = TranscriptionService();
-
-  TranscriptionRepository(this._firestore, this._storage, this._auth);
-
-  Stream<List<TranscriptionModel>> getUserTranscriptions() {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      return Stream.value([]);
-    }
-
-    return _firestore
-        .collection('transcriptions')
-        .where('userId', isEqualTo: userId)
-        .where('isDeleted', isEqualTo: false)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => TranscriptionModel.fromFirestore(doc))
-              .toList(),
-        );
-  }
-
-  Future<TranscriptionModel> getTranscriptionById(String id) async {
-    final doc = await _firestore.collection('transcriptions').doc(id).get();
-    if (!doc.exists) {
-      throw 'Transcription not found';
-    }
-    return TranscriptionModel.fromFirestore(doc);
-  }
-
-  Future<void> createTranscription(TranscriptionModel transcription) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw 'User not authenticated';
-    }
-
-    final updatedTranscription = transcription.copyWith(
-      userId: userId,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    await _firestore
-        .collection('transcriptions')
-        .doc(transcription.id)
-        .set(updatedTranscription.toFirestore());
-  }
-
-  Future<void> updateTranscription(TranscriptionModel transcription) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw 'User not authenticated';
-    }
-
-    if (transcription.userId != userId) {
-      throw 'Unauthorized access';
-    }
-
-    await _firestore.collection('transcriptions').doc(transcription.id).update({
-      'title': transcription.title,
-      'description': transcription.description,
-      'content': transcription.content,
-      'tags': transcription.tags,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> deleteTranscription(String id) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw 'User not authenticated';
-    }
-
-    // Soft delete by setting isDeleted to true
-    await _firestore.collection('transcriptions').doc(id).update({
-      'isDeleted': true,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> toggleFavorite(String id, bool isFavorite) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw 'User not authenticated';
-    }
-
-    await _firestore.collection('transcriptions').doc(id).update({
-      'isFavorite': isFavorite,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<String> uploadAudioFile(String filePath, String fileName) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw 'User not authenticated';
-    }
-
-    final file = File(filePath);
-    final extension = fileName.split('.').last;
-    final uniqueFileName = '${const Uuid().v4()}.$extension';
-    final storageRef = _storage.ref().child('audio/$userId/$uniqueFileName');
-
-    final uploadTask = storageRef.putFile(
-      file,
-      SettableMetadata(contentType: 'audio/$extension'),
-    );
-
-    final snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
-  }
-
-  Future<String> uploadVideoFile(String filePath, String fileName) async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) {
-      throw 'User not authenticated';
-    }
-
-    final file = File(filePath);
-    final extension = fileName.split('.').last;
-    final uniqueFileName = '${const Uuid().v4()}.$extension';
-    final storageRef = _storage.ref().child('video/$userId/$uniqueFileName');
-
-    final uploadTask = storageRef.putFile(
-      file,
-      SettableMetadata(contentType: 'video/$extension'),
-    );
-
-    final snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
   }
 }
