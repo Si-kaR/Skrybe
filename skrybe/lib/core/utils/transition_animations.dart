@@ -1,6 +1,13 @@
 // lib/core/utils/transition_animations.dart
 import 'package:flutter/material.dart';
 
+// lib/widgets/error_screen.dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
+import 'package:skrybe/routes/app_router.dart';
+import 'package:skrybe/routes/route_names.dart';
+
 Widget fadeTransition(
   BuildContext context,
   Animation<double> animation,
@@ -22,10 +29,10 @@ Widget slideTransition(
   const begin = Offset(1.0, 0.0);
   const end = Offset.zero;
   const curve = Curves.easeInOut;
-  
+
   final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
   final offsetAnimation = animation.drive(tween);
-  
+
   return SlideTransition(
     position: offsetAnimation,
     child: child,
@@ -41,10 +48,10 @@ Widget slideUpTransition(
   const begin = Offset(0.0, 1.0);
   const end = Offset.zero;
   const curve = Curves.easeInOut;
-  
+
   final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
   final offsetAnimation = animation.drive(tween);
-  
+
   return SlideTransition(
     position: offsetAnimation,
     child: FadeTransition(
@@ -54,15 +61,9 @@ Widget slideUpTransition(
   );
 }
 
-// lib/widgets/error_screen.dart
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
-import 'package:skrybe/routes/route_names.dart';
-
 class ErrorScreen extends StatelessWidget {
   final String error;
-  
+
   const ErrorScreen({
     super.key,
     required this.error,

@@ -4,6 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skrybe/data/models/user_model.dart';
 import 'package:skrybe/data/repositories/auth_repository.dart';
 
+// lib/data/repositories/auth_repository.dart
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:skrybe/data/models/user_model.dart';
+
+// lib/data/models/user_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:equatable/equatable.dart';
+
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(FirebaseAuth.instance);
 });
@@ -18,7 +27,8 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
   return authRepository.userChanges;
 });
 
-final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthController(authRepository: authRepository);
 });
@@ -78,7 +88,8 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
 
   Future<void> updatePassword(String newPassword) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _authRepository.updatePassword(newPassword));
+    state = await AsyncValue.guard(
+        () => _authRepository.updatePassword(newPassword));
   }
 
   Future<void> deleteAccount() async {
@@ -86,11 +97,6 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() => _authRepository.deleteAccount());
   }
 }
-
-// lib/data/repositories/auth_repository.dart
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:skrybe/data/models/user_model.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth;
@@ -110,7 +116,7 @@ class AuthRepository {
       if (userData.exists) {
         return UserModel.fromFirestore(userData);
       }
-      
+
       // If user document doesn't exist, create it
       final newUser = UserModel(
         id: user.uid,
@@ -119,7 +125,7 @@ class AuthRepository {
         photoURL: user.photoURL,
         createdAt: DateTime.now(),
       );
-      
+
       await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
       return newUser;
     });
@@ -240,7 +246,7 @@ class AuthRepository {
 
       // Delete Firestore user document
       await _firestore.collection('users').doc(user.uid).delete();
-      
+
       // Delete user from Firebase Auth
       await user.delete();
     } on FirebaseAuthException catch (e) {
@@ -269,10 +275,6 @@ class AuthRepository {
     }
   }
 }
-
-// lib/data/models/user_model.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
 
 class UserModel extends Equatable {
   final String id;

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:skrybe/core/utils/transition_animations.dart';
 import 'package:skrybe/data/providers/auth_provider.dart';
 import 'package:skrybe/features/auth/screens/login_screen.dart';
@@ -19,7 +20,7 @@ import 'package:skrybe/widgets/error_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
-  
+
   return GoRouter(
     initialLocation: RouteNames.splash,
     debugLogDiagnostics: true,
@@ -29,23 +30,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (BuildContext context, GoRouterState state) {
       // Get whether the user has seen onboarding
       final hasSeenOnboarding = ref.read(onboardingCompletedProvider);
-      
+
       // Handle authentication redirects
       final isAuthenticated = authState.valueOrNull ?? false;
-      final isLoggingIn = state.location == RouteNames.login;
-      final isSigningUp = state.location == RouteNames.signup;
-      final isOnboarding = state.location == RouteNames.onboarding;
-      final isWelcome = state.location == RouteNames.welcome;
-      final isSplash = state.location == RouteNames.splash;
-      
+      final isLoggingIn = state.uri.toString() == RouteNames.login;
+      final isSigningUp = state.uri.toString() == RouteNames.signup;
+      final isOnboarding = state.uri.toString() == RouteNames.onboarding;
+      final isWelcome = state.uri.toString() == RouteNames.welcome;
+      final isSplash = state.uri.toString() == RouteNames.splash;
+
       // Always allow splash screen
       if (isSplash) return null;
-      
+
       // Handle onboarding flow
       if (!hasSeenOnboarding && !isOnboarding && !isSplash) {
         return RouteNames.onboarding;
       }
-      
+
       // Handle authentication flow
       if (!isAuthenticated) {
         if (isLoggingIn || isSigningUp || isWelcome || isOnboarding) {
@@ -53,12 +54,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
         return RouteNames.welcome;
       }
-      
+
       // If the user is authenticated but on an auth screen, redirect to dashboard
       if (isAuthenticated && (isLoggingIn || isSigningUp || isWelcome)) {
         return RouteNames.dashboard;
       }
-      
+
       return null;
     },
     routes: [
@@ -93,7 +94,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transitionsBuilder: slideTransition,
         ),
       ),
-      
+
       // Authentication Routes
       GoRoute(
         path: RouteNames.login,
@@ -115,7 +116,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transitionsBuilder: slideTransition,
         ),
       ),
-      
+
       // Main App Routes
       GoRoute(
         path: RouteNames.dashboard,
@@ -189,11 +190,20 @@ class RouteNames {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String welcome = '/welcome';
-  
+
   // Auth Routes
   static const String login = '/login';
   static const String signup = '/signup';
   static const String forgotPassword = '/forgot-password';
-  
+
   // Main App Routes
   static const String dashboard = '/dashboard';
+
+  static var profile;
+
+  static var record;
+
+  static var upload;
+
+  static var transcription;
+}
