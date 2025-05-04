@@ -1,2 +1,4 @@
 // TODO Implement this library.
-class TranscriptionService {}
+class TranscriptionService {
+  transcribeAudio(String audioUrl) {}
+}
