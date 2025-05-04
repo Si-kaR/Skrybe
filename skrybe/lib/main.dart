@@ -1,125 +1,600 @@
+// lib/main.dart
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:skrybe/core/services/notification_service.dart';
+import 'package:skrybe/core/theme/app_theme.dart';
+import 'package:skrybe/firebase_options.dart';
+import 'package:skrybe/routes/app_router.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set preferred display mode (high refresh rate)
+  if (!kIsWeb) {
+    try {
+      await FlutterDisplayMode.setHighRefreshRate();
+    } catch (e) {
+      debugPrint('Could not set high refresh rate: $e');
+    }
+  }
+
+  // Initialize services
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Hive.initFlutter();
+  await dotenv.load();
+  await NotificationService.initialize();
+  
+  // Open important Hive boxes
+  await Hive.openBox('settings');
+  await Hive.openBox('transcripts');
+  await Hive.openBox('user');
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  runApp(const ProviderScope(child: SkrybeApp()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SkrybeApp extends ConsumerWidget {
+  const SkrybeApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final appRouter = ref.watch(appRouterProvider);
+    
+    return MaterialApp.router(
+      title: 'Skrybe',
+      debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      routerConfig: appRouter,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+// lib/core/theme/app_theme.dart
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+  (ref) => ThemeModeNotifier(),
+);
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(_loadThemeMode());
 
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  static ThemeMode _loadThemeMode() {
+    final settings = Hive.box('settings');
+    final themeModeIndex = settings.get('themeMode', defaultValue: 0);
+    return ThemeMode.values[themeModeIndex];
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+  void toggleTheme() {
+    final newMode = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    state = newMode;
+    
+    final settings = Hive.box('settings');
+    settings.put('themeMode', newMode.index);
+  }
+}
+
+class AppTheme {
+  static const _primaryColor = Color(0xFF6750A4);
+  static const _secondaryColor = Color(0xFF625B71);
+  static const _tertiaryColor = Color(0xFF7D5260);
+  
+// Light Theme Config
+  static final lightTheme = FlexThemeData.light(
+    scheme: FlexScheme.materialBaseline,
+    surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+    blendLevel: 9,
+    subThemesData: const FlexSubThemesData(
+      blendOnLevel: 10,
+      blendOnColors: false,s
+      inputDecoratorRadius: 12.0,
+      inputDecoratorBorderType: FlexInputBorderType.outline,
+      fabRadius: 16.0,
+      elevatedButtonRadius: 12.0,
+      cardRadius: 16.0,
+      popupMenuRadius: 8.0,
+      dialogRadius: 20.0,
+      timePickerDialogRadius: 20.0,
+      appBarBackgroundSchemeColor: SchemeColor.surface,
+      tabBarItemSchemeColor: SchemeColor.primary,
+      bottomNavigationBarSelectedLabelSchemeColor: SchemeColor.primary,
+      bottomNavigationBarSelectedIconSchemeColor: SchemeColor.primary,
+      navigationBarSelectedLabelSchemeColor: SchemeColor.primary,
+      navigationBarSelectedIconSchemeColor: SchemeColor.primary,
+    ),
+    keyColors: const FlexKeyColors(
+      useSecondary: true,
+      useTertiary: true,
+      keepPrimary: true,
+    ),
+    tones: FlexTones.soft(Brightness.light),
+    visualDensity: FlexColorScheme.comfortablePlatformDensity,
+    useMaterial3: true,
+    fontFamily: GoogleFonts.poppins().fontFamily,
+  ).copyWith(
+    textTheme: TextTheme(
+      displayLarge: GoogleFonts.poppins(
+        fontSize: 57,
+        fontWeight: FontWeight.w400,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
+      displayMedium: GoogleFonts.poppins(
+        fontSize: 45,
+        fontWeight: FontWeight.w400,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      displaySmall: GoogleFonts.poppins(
+        fontSize: 36,
+        fontWeight: FontWeight.w400,
+      ),
+      headlineLarge: GoogleFonts.poppins(
+        fontSize: 32,
+        fontWeight: FontWeight.w600,
+      ),
+      headlineMedium: GoogleFonts.poppins(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+      ),
+      headlineSmall: GoogleFonts.poppins(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+      ),
+      titleLarge: GoogleFonts.poppins(
+        fontSize: 22,
+        fontWeight: FontWeight.w500,
+      ),
+      titleMedium: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      titleSmall: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyLarge: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+      ),
+      bodyMedium: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      bodySmall: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+      ),
+      labelLarge: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      labelMedium: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+      labelSmall: GoogleFonts.poppins(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
+
+// Dark Theme Config
+  static final darkTheme = FlexThemeData.dark(
+    scheme: FlexScheme.materialBaseline,
+    surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+    blendLevel: 15,
+    subThemesData: const FlexSubThemesData(
+      blendOnLevel: 20,
+      blendOnColors: false,
+      inputDecoratorRadius: 12.0,
+      inputDecoratorBorderType: FlexInputBorderType.outline,
+      fabRadius: 16.0,
+      elevatedButtonRadius: 12.0,
+      cardRadius: 16.0,
+      popupMenuRadius: 8.0,
+      dialogRadius: 20.0,
+      timePickerDialogRadius: 20.0,
+      appBarBackgroundSchemeColor: SchemeColor.surface,
+      tabBarItemSchemeColor: SchemeColor.primary,
+      bottomNavigationBarSelectedLabelSchemeColor: SchemeColor.primary,
+      bottomNavigationBarSelectedIconSchemeColor: SchemeColor.primary,
+      navigationBarSelectedLabelSchemeColor: SchemeColor.primary,
+      navigationBarSelectedIconSchemeColor: SchemeColor.primary,
+    ),
+    keyColors: const FlexKeyColors(
+      useSecondary: true,
+      useTertiary: true,
+      keepPrimary: true,
+    ),
+    tones: FlexTones.soft(Brightness.dark),
+    visualDensity: FlexColorScheme.comfortablePlatformDensity,
+    useMaterial3: true,
+    fontFamily: GoogleFonts.poppins().fontFamily,
+  ).copyWith(
+    textTheme: TextTheme(
+      displayLarge: GoogleFonts.poppins(
+        fontSize: 57,
+        fontWeight: FontWeight.w400,
+      ),
+      displayMedium: GoogleFonts.poppins(
+        fontSize: 45,
+        fontWeight: FontWeight.w400,
+      ),
+      displaySmall: GoogleFonts.poppins(
+        fontSize: 36,
+        fontWeight: FontWeight.w400,
+      ),
+      headlineLarge: GoogleFonts.poppins(
+        fontSize: 32,
+        fontWeight: FontWeight.w600,
+      ),
+      headlineMedium: GoogleFonts.poppins(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+      ),
+      headlineSmall: GoogleFonts.poppins(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+      ),
+      titleLarge: GoogleFonts.poppins(
+        fontSize: 22,
+        fontWeight: FontWeight.w500,
+      ),
+      titleMedium: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      titleSmall: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyLarge: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+      ),
+      bodyMedium: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      bodySmall: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+      ),
+      labelLarge: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      labelMedium: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+      labelSmall: GoogleFonts.poppins(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
+}
+
+// lib/core/services/notification_service.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+class NotificationService {
+  static final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  static Future<void> initialize() async {
+    // Request notification permissions
+    await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Configure local notifications
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
+    );
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Handle notification taps
+      },
+    );
+
+    // Configure Firebase Cloud Messaging
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+
+    // Create notification channels for Android
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'transcription_status',
+      'Transcription Status',
+      description: 'Notifications about transcription status',
+      importance: Importance.high,
+    );
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
+
+  static Future<void> showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'transcription_status',
+      'Transcription Status',
+      channelDescription: 'Notifications about transcription status',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      DateTime.now().millisecond,
+      title,
+      body,
+      details,
+      payload: payload,
+    );
+  }
+
+  static Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    await showNotification(
+      title: message.notification?.title ?? 'Skrybe',
+      body: message.notification?.body ?? '',
+      payload: message.data['route'],
     );
   }
 }
+
+@pragma('vm:entry-point')
+Future<void> _handleBackgroundMessage(RemoteMessage message) async {
+  // Initialize Firebase if needed
+  // Handle background message
+}
+
+// lib/firebase_options.dart
+// This file would be generated by the FlutterFire CLI
+// Placeholder for the Firebase configuration
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      return web;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
+      case TargetPlatform.linux:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for linux - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
+      default:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions are not supported for this platform.',
+        );
+    }
+  }
+
+  // Replace these with your actual Firebase configuration values
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'YOUR-API-KEY',
+    appId: 'YOUR-APP-ID',
+    messagingSenderId: 'YOUR-SENDER-ID',
+    projectId: 'YOUR-PROJECT-ID',
+    authDomain: 'YOUR-AUTH-DOMAIN',
+    storageBucket: 'YOUR-STORAGE-BUCKET',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'YOUR-API-KEY',
+    appId: 'YOUR-APP-ID',
+    messagingSenderId: 'YOUR-SENDER-ID',
+    projectId: 'YOUR-PROJECT-ID',
+    storageBucket: 'YOUR-STORAGE-BUCKET',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'YOUR-API-KEY',
+    appId: 'YOUR-APP-ID',
+    messagingSenderId: 'YOUR-SENDER-ID',
+    projectId: 'YOUR-PROJECT-ID',
+    storageBucket: 'YOUR-STORAGE-BUCKET',
+    iosClientId: 'YOUR-IOS-CLIENT-ID',
+    iosBundleId: 'YOUR-IOS-BUNDLE-ID',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'YOUR-API-KEY',
+    appId: 'YOUR-APP-ID',
+    messagingSenderId: 'YOUR-SENDER-ID',
+    projectId: 'YOUR-PROJECT-ID',
+    storageBucket: 'YOUR-STORAGE-BUCKET',
+    iosClientId: 'YOUR-IOS-CLIENT-ID',
+    iosBundleId: 'YOUR-IOS-BUNDLE-ID',
+  );
+}
+
+
+// import 'package:flutter/material.dart';
+
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   // This widget is the root of your application.
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Flutter Demo',
+//       theme: ThemeData(
+//         // This is the theme of your application.
+//         //
+//         // TRY THIS: Try running your application with "flutter run". You'll see
+//         // the application has a purple toolbar. Then, without quitting the app,
+//         // try changing the seedColor in the colorScheme below to Colors.green
+//         // and then invoke "hot reload" (save your changes or press the "hot
+//         // reload" button in a Flutter-supported IDE, or press "r" if you used
+//         // the command line to start the app).
+//         //
+//         // Notice that the counter didn't reset back to zero; the application
+//         // state is not lost during the reload. To reset the state, use hot
+//         // restart instead.
+//         //
+//         // This works for code too, not just values: Most code changes can be
+//         // tested with just a hot reload.
+//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+//         useMaterial3: true,
+//       ),
+//       home: const MyHomePage(title: 'Flutter Demo Home Page'),
+//     );
+//   }
+// }
+
+// class MyHomePage extends StatefulWidget {
+//   const MyHomePage({super.key, required this.title});
+
+//   // This widget is the home page of your application. It is stateful, meaning
+//   // that it has a State object (defined below) that contains fields that affect
+//   // how it looks.
+
+//   // This class is the configuration for the state. It holds the values (in this
+//   // case the title) provided by the parent (in this case the App widget) and
+//   // used by the build method of the State. Fields in a Widget subclass are
+//   // always marked "final".
+
+//   final String title;
+
+//   @override
+//   State<MyHomePage> createState() => _MyHomePageState();
+// }
+
+// class _MyHomePageState extends State<MyHomePage> {
+//   int _counter = 0;
+
+//   void _incrementCounter() {
+//     setState(() {
+//       // This call to setState tells the Flutter framework that something has
+//       // changed in this State, which causes it to rerun the build method below
+//       // so that the display can reflect the updated values. If we changed
+//       // _counter without calling setState(), then the build method would not be
+//       // called again, and so nothing would appear to happen.
+//       _counter++;
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     // This method is rerun every time setState is called, for instance as done
+//     // by the _incrementCounter method above.
+//     //
+//     // The Flutter framework has been optimized to make rerunning build methods
+//     // fast, so that you can just rebuild anything that needs updating rather
+//     // than having to individually change instances of widgets.
+//     return Scaffold(
+//       appBar: AppBar(
+//         // TRY THIS: Try changing the color here to a specific color (to
+//         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+//         // change color while the other colors stay the same.
+//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+//         // Here we take the value from the MyHomePage object that was created by
+//         // the App.build method, and use it to set our appbar title.
+//         title: Text(widget.title),
+//       ),
+//       body: Center(
+//         // Center is a layout widget. It takes a single child and positions it
+//         // in the middle of the parent.
+//         child: Column(
+//           // Column is also a layout widget. It takes a list of children and
+//           // arranges them vertically. By default, it sizes itself to fit its
+//           // children horizontally, and tries to be as tall as its parent.
+//           //
+//           // Column has various properties to control how it sizes itself and
+//           // how it positions its children. Here we use mainAxisAlignment to
+//           // center the children vertically; the main axis here is the vertical
+//           // axis because Columns are vertical (the cross axis would be
+//           // horizontal).
+//           //
+//           // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+//           // action in the IDE, or press "p" in the console), to see the
+//           // wireframe for each widget.
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: <Widget>[
+//             const Text(
+//               'You have pushed the button this many times:',
+//             ),
+//             Text(
+//               '$_counter',
+//               style: Theme.of(context).textTheme.headlineMedium,
+//             ),
+//           ],
+//         ),
+//       ),
+//       floatingActionButton: FloatingActionButton(
+//         onPressed: _incrementCounter,
+//         tooltip: 'Increment',
+//         child: const Icon(Icons.add),
+//       ), // This trailing comma makes auto-formatting nicer for build methods.
+//     );
+//   }
+// }
