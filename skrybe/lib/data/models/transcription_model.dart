@@ -12,26 +12,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skrybe/data/models/transcription_model.dart';
 import 'package:skrybe/data/repositories/transcription_repository.dart';
 
-// lib/data/repositories/transcription_repository.dart
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:skrybe/data/models/transcription_model.dart';
-import 'package:skrybe/data/services/transcription_service.dart';
-import 'package:uuid/uuid.dart';
-
-enum TranscriptionSource {
-  recording,
-  audioUpload,
-  videoUpload,
-}
-
 enum TranscriptionStatus {
   pending,
   processing,
   completed,
   failed,
+}
+
+enum TranscriptionSource {
+  recording,
+  audioUpload,
+  videoUpload,
 }
 
 class TranscriptionModel extends Equatable {
@@ -40,17 +31,20 @@ class TranscriptionModel extends Equatable {
   final String title;
   final String? description;
   final String content;
-  final TranscriptionSource source;
-  final TranscriptionStatus status;
-  final String? audioUrl;
-  final String? videoUrl;
-  final double? durationInSeconds;
+  final String? rawaudioUrl;
+  final String? rawvideoUrl;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final TranscriptionStatus status;
+  final TranscriptionSource source;
+  final double? duration;
+  final List<String>? speakers;
   final Map<String, dynamic>? metadata;
   final List<String>? tags;
   final bool isFavorite;
+  final bool isSynced;
   final bool isDeleted;
+  final String? errorMessage;
 
   const TranscriptionModel({
     required this.id,
@@ -58,18 +52,132 @@ class TranscriptionModel extends Equatable {
     required this.title,
     this.description,
     required this.content,
-    required this.source,
-    required this.status,
-    this.audioUrl,
-    this.videoUrl,
-    this.durationInSeconds,
+    this.rawaudioUrl,
+    this.rawvideoUrl,
     required this.createdAt,
-    this.updatedAt,
+    required this.updatedAt,
+    required this.status,
+    required this.source,
+    this.duration,
+    this.speakers,
     this.metadata,
     this.tags,
+    this.isSynced = false,
     this.isFavorite = false,
     this.isDeleted = false,
+    this.errorMessage,
   });
+
+  factory TranscriptionModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return TranscriptionModel(
+      id: doc.id,
+      userId: data['userId'] ?? '',
+      title: data['title'] ?? 'Untitled Transcription',
+      description: data['description'],
+      content: data['content'] ?? '',
+      rawaudioUrl: data['rawaudioUrl'],
+      rawvideoUrl: data['rawvideoUrl'],
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      status: TranscriptionStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => TranscriptionStatus.pending,
+      ),
+      source: TranscriptionSource.values.firstWhere(
+        (e) => e.name == data['source'],
+        orElse: () => TranscriptionSource.recording,
+      ),
+      duration: data['durationMs'],
+      speakers:
+          data['speakers'] != null ? List<String>.from(data['speakers']) : null,
+      metadata: data['metadata'],
+      tags: data['tags'] != null ? List<String>.from(data['tags']) : null,
+      isSynced: data['isSynced'] ?? false,
+      errorMessage: data['errorMessage'],
+      isFavorite: data['isFavorite'] ?? false,
+      isDeleted: data['isDeleted'] ?? false,
+    );
+  }
+
+  factory TranscriptionModel.fromLocal(Map<String, dynamic> data) {
+    return TranscriptionModel(
+      id: data['id'],
+      userId: data['userId'],
+      title: data['title'] ?? 'Untitled Transcription',
+      description: data['description'],
+      content: data['content'] ?? '',
+      rawaudioUrl: data['rawaudioUrl'],
+      rawvideoUrl: data['rawvideoUrl'],
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      status: TranscriptionStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => TranscriptionStatus.pending,
+      ),
+      source: TranscriptionSource.values.firstWhere(
+        (e) => e.name == data['source'],
+        orElse: () => TranscriptionSource.recording,
+      ),
+      duration: data['durationMs'] != null ? data['durationMs'] / 1000 : null,
+      speakers:
+          data['speakers'] != null ? List<String>.from(data['speakers']) : null,
+      metadata: data['metadata'],
+      tags: data['tags'] != null ? List<String>.from(data['tags']) : null,
+      isSynced: data['isSynced'] ?? false,
+      errorMessage: data['errorMessage'],
+      isFavorite: data['isFavorite'] ?? false,
+      isDeleted: data['isDeleted'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toFireStore() {
+    return {
+      'id': id,
+      'userId': userId,
+      'title': title,
+      'description': description,
+      'content': content,
+      'source': source.name,
+      'status': status.name,
+      'rawaudioUrl': rawaudioUrl,
+      'rawvideoUrl': rawvideoUrl,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt!),
+      'metadata': metadata,
+      'durationMs': duration != null ? duration! * 1000 : null,
+      'speakers': speakers,
+      'isSynced': isSynced,
+      'errorMessage': errorMessage,
+      'tags': tags,
+      'isFavorite': isFavorite,
+      'isDeleted': isDeleted,
+    };
+  }
+
+  Map<String, dynamic> toLocal() {
+    return {
+      'id': id,
+      'userId': userId,
+      'title': title,
+      'description': description,
+      'content': content,
+      'source': source.name,
+      'status': status.name,
+      'rawaudioUrl': rawaudioUrl,
+      'rawvideoUrl': rawvideoUrl,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'metadata': metadata,
+      'durationMs': duration != null ? duration! * 1000 : null,
+      'speakers': speakers,
+      'isSynced': isSynced,
+      'errorMessage': errorMessage,
+      'tags': tags,
+      'isFavorite': isFavorite,
+      'isDeleted': isDeleted,
+    };
+  }
 
   factory TranscriptionModel.empty() {
     return TranscriptionModel(
@@ -80,6 +188,7 @@ class TranscriptionModel extends Equatable {
       source: TranscriptionSource.recording,
       status: TranscriptionStatus.pending,
       createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
   }
 
@@ -91,13 +200,16 @@ class TranscriptionModel extends Equatable {
     String? content,
     TranscriptionSource? source,
     TranscriptionStatus? status,
-    String? audioUrl,
-    String? videoUrl,
-    double? durationInSeconds,
+    String? rawaudioUrl,
+    String? rawvideoUrl,
+    Duration? duration,
+    List<String>? speakers,
+    Map<String, dynamic>? metadata,
     DateTime? createdAt,
     DateTime? updatedAt,
-    Map<String, dynamic>? metadata,
     List<String>? tags,
+    bool? isSynced,
+    String? errorMessage,
     bool? isFavorite,
     bool? isDeleted,
   }) {
@@ -109,9 +221,12 @@ class TranscriptionModel extends Equatable {
       content: content ?? this.content,
       source: source ?? this.source,
       status: status ?? this.status,
-      audioUrl: audioUrl ?? this.audioUrl,
-      videoUrl: videoUrl ?? this.videoUrl,
-      durationInSeconds: durationInSeconds ?? this.durationInSeconds,
+      rawaudioUrl: rawaudioUrl ?? this.rawaudioUrl,
+      rawvideoUrl: rawvideoUrl ?? this.rawvideoUrl,
+      duration: duration as double? ?? this.duration,
+      speakers: speakers ?? this.speakers,
+      isSynced: isSynced ?? this.isSynced,
+      errorMessage: errorMessage ?? this.errorMessage,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,
@@ -121,74 +236,48 @@ class TranscriptionModel extends Equatable {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'userId': userId,
-      'title': title,
-      'description': description,
-      'content': content,
-      'source': source.name,
-      'status': status.name,
-      'audioUrl': audioUrl,
-      'videoUrl': videoUrl,
-      'durationInSeconds': durationInSeconds,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-      'metadata': metadata,
-      'tags': tags,
-      'isFavorite': isFavorite,
-      'isDeleted': isDeleted,
-    };
-  }
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        title,
+        description,
+        content,
+        source,
+        status,
+        rawaudioUrl,
+        rawvideoUrl,
+        duration,
+        createdAt,
+        updatedAt,
+        metadata,
+        speakers,
+        isSynced,
+        errorMessage,
+        tags,
+        isFavorite,
+        isDeleted,
+      ];
 
-  Map<String, dynamic> toFirestore() {
-    return {
-      'userId': userId,
-      'title': title,
-      'description': description,
-      'content': content,
-      'source': source.name,
-      'status': status.name,
-      'audioUrl': audioUrl,
-      'videoUrl': videoUrl,
-      'durationInSeconds': durationInSeconds,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      'metadata': metadata,
-      'tags': tags,
-      'isFavorite': isFavorite,
-      'isDeleted': isDeleted,
-    };
-  }
-
-  factory TranscriptionModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return TranscriptionModel(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      title: data['title'] ?? 'Untitled Transcription',
-      description: data['description'],
-      content: data['content'] ?? '',
-      source: TranscriptionSource.values.firstWhere(
-        (e) => e.name == data['source'],
-        orElse: () => TranscriptionSource.recording,
-      ),
-      status: TranscriptionStatus.values.firstWhere(
-        (e) => e.name == data['status'],
-        orElse: () => TranscriptionStatus.pending,
-      ),
-      audioUrl: data['audioUrl'],
-      videoUrl: data['videoUrl'],
-      durationInSeconds: data['durationInSeconds'],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
-      metadata: data['metadata'],
-      tags: data['tags'] != null ? List<String>.from(data['tags']) : null,
-      isFavorite: data['isFavorite'] ?? false,
-      isDeleted: data['isDeleted'] ?? false,
-    );
-  }
+  // Map<String, dynamic> toFirestore() {
+  //   return {
+  //     'userId': userId,
+  //     'title': title,
+  //     'description': description,
+  //     'content': content,
+  //     'source': source.name,
+  //     'status': status.name,
+  //     'audioUrl': rawaudioUrl,
+  //     'videoUrl': rawvideoUrl,
+  //     'duration': duration,
+  //     'createdAt': FieldValue.serverTimestamp(),
+  //     'updatedAt': FieldValue.serverTimestamp(),
+  //     'metadata': metadata,
+  //     // // 'tags': tags,
+  //     'isFavorite': isFavorite,
+  //     'isDeleted': isDeleted,
+  //   };
+  // }
 
   factory TranscriptionModel.fromMap(Map<String, dynamic> map) {
     return TranscriptionModel(
@@ -205,14 +294,14 @@ class TranscriptionModel extends Equatable {
         (e) => e.name == map['status'],
         orElse: () => TranscriptionStatus.pending,
       ),
-      audioUrl: map['audioUrl'],
-      videoUrl: map['videoUrl'],
-      durationInSeconds: map['durationInSeconds'],
+      rawaudioUrl: map['rawaudioUrl'],
+      rawvideoUrl: map['rawvideoUrl'],
+      duration: map['duration'],
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt:
           map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
       metadata: map['metadata'],
-      tags: map['tags'] != null ? List<String>.from(map['tags']) : null,
+      // // // tags: map['tags'] != null ? List<String>.from(map['tags']) : null,
       isFavorite: map['isFavorite'] ?? false,
       isDeleted: map['isDeleted'] ?? false,
     );
@@ -243,32 +332,11 @@ class TranscriptionModel extends Equatable {
   }
 
   String get formattedDuration {
-    if (durationInSeconds == null) return '';
-    final minutes = (durationInSeconds! ~/ 60).toString().padLeft(2, '0');
-    final seconds =
-        (durationInSeconds! % 60).toInt().toString().padLeft(2, '0');
+    if (duration == null) return '';
+    final minutes = (duration! ~/ 60).toString().padLeft(2, '0');
+    final seconds = (duration! % 60).toInt().toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
-
-  @override
-  List<Object?> get props => [
-        id,
-        userId,
-        title,
-        description,
-        content,
-        source,
-        status,
-        audioUrl,
-        videoUrl,
-        durationInSeconds,
-        createdAt,
-        updatedAt,
-        metadata,
-        tags,
-        isFavorite,
-        isDeleted,
-      ];
 }
 
 final transcriptionRepositoryProvider =
@@ -297,7 +365,9 @@ final transcriptionControllerProvider =
 final transcriptionDetailProvider =
     FutureProvider.family<TranscriptionModel, String>((ref, id) {
   final transcriptionRepository = ref.watch(transcriptionRepositoryProvider);
-  return transcriptionRepository.getTranscriptionById(id);
+  return transcriptionRepository
+      .getTranscriptionById(id)
+      .then((value) => value as TranscriptionModel);
 });
 
 class TranscriptionController extends StateNotifier<AsyncValue<void>> {
@@ -310,14 +380,14 @@ class TranscriptionController extends StateNotifier<AsyncValue<void>> {
 
   Future<void> createTranscription(TranscriptionModel transcription) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-        () => _transcriptionRepository.createTranscription(transcription));
+    state = await AsyncValue.guard(() => _transcriptionRepository
+        .createTranscription(transcription as TranscriptionModel));
   }
 
   Future<void> updateTranscription(TranscriptionModel transcription) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-        () => _transcriptionRepository.updateTranscription(transcription));
+    state = await AsyncValue.guard(() => _transcriptionRepository
+        .updateTranscription(transcription as TranscriptionModel));
   }
 
   Future<void> deleteTranscription(String id) async {

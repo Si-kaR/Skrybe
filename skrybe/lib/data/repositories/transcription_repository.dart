@@ -101,7 +101,7 @@ class TranscriptionRepository {
     await _firestore
         .collection('transcriptions')
         .doc(transcription.id)
-        .set(updatedTranscription.toFirestore());
+        .set(updatedTranscription.toFireStore());
   }
 
   Future<void> updateTranscription(TranscriptionModel transcription) async {

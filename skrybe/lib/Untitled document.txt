@@ -1,0 +1,347 @@
+﻿// lib/features/auth/data/repositories/auth_repository.dart
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:skrybe/features/auth/data/models/user_model.dart';
+
+
+class AuthRepository {
+  final FirebaseAuth _firebaseAuth;
+  final GoogleSignIn _googleSignIn;
+
+
+  AuthRepository({
+    FirebaseAuth? firebaseAuth,
+    GoogleSignIn? googleSignIn,
+  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+       _googleSignIn = googleSignIn ?? GoogleSignIn();
+
+
+  Stream<UserModel> get authStateChanges => 
+      _firebaseAuth.authStateChanges().map((user) => user != null 
+          ? UserModel.fromFirebaseUser(user) 
+          : UserModel.empty());
+
+
+  Future<UserModel> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      final user = credential.user;
+      if (user == null) {
+        throw Exception('User creation failed');
+      }
+      
+      await user.updateDisplayName(name);
+      
+      return UserModel.fromFirebaseUser(user);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+
+  Future<UserModel> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final credential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      final user = credential.user;
+      if (user == null) {
+        throw Exception('Sign in failed');
+      }
+      
+      return UserModel.fromFirebaseUser(user);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+
+  Future<UserModel> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        throw Exception('Google sign in aborted');
+      }
+      
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final user = userCredential.user;
+      
+      if (user == null) {
+        throw Exception('Google sign in failed');
+      }
+      
+      return UserModel.fromFirebaseUser(user);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Google sign in error: $e');
+    }
+  }
+
+
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _firebaseAuth.signOut();
+  }
+
+
+  Future<void> resetPassword(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+
+  Future<void> updateUserProfile({
+    String? displayName,
+    String? photoURL,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+    
+    try {
+      await user.updateDisplayName(displayName);
+      await user.updatePhotoURL(photoURL);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+    
+    final email = user.email;
+    if (email == null) {
+      throw Exception('User email not available');
+    }
+    
+    try {
+      // Re-authenticate user
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: currentPassword,
+      );
+      
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+
+  String _handleAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'The email address is already in use by another account.';
+      case 'invalid-email':
+        return 'The email address is badly formatted.';
+      case 'user-disabled':
+        return 'This user has been disabled.';
+      case 'user-not-found':
+        return 'No user found for that email.';
+      case 'wrong-password':
+        return 'Wrong password provided for that user.';
+      case 'weak-password':
+        return 'The password provided is too weak.';
+      case 'operation-not-allowed':
+        return 'Operation not allowed.';
+      case 'requires-recent-login':
+        return 'This operation is sensitive and requires recent authentication. Log in again before retrying.';
+      default:
+        return 'An unknown error occurred: ${e.message}';
+    }
+  }
+}
+
+
+// lib/features/auth/data/models/user_model.dart
+import 'package:equatable/equatable.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+
+class UserModel extends Equatable {
+  final String id;
+  final String? email;
+  final String? name;
+  final String? photoURL;
+  final bool isEmailVerified;
+
+
+  const UserModel({
+    required this.id,
+    this.email,
+    this.name,
+    this.photoURL,
+    this.isEmailVerified = false,
+  });
+
+
+  factory UserModel.empty() {
+    return const UserModel(id: '');
+  }
+
+
+  factory UserModel.fromFirebaseUser(User user) {
+    return UserModel(
+      id: user.uid,
+      email: user.email,
+      name: user.displayName,
+      photoURL: user.photoURL,
+      isEmailVerified: user.emailVerified,
+    );
+  }
+
+
+  bool get isEmpty => id.isEmpty;
+  bool get isNotEmpty => id.isNotEmpty;
+
+
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? photoURL,
+    bool? isEmailVerified,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      photoURL: photoURL ?? this.photoURL,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+    );
+  }
+
+
+  @override
+  List<Object?> get props => [id, email, name, photoURL, isEmailVerified];
+}
+
+
+// lib/features/auth/application/providers/auth_provider.dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:skrybe/features/auth/data/models/user_model.dart';
+import 'package:skrybe/features/auth/data/repositories/auth_repository.dart';
+
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepository();
+});
+
+
+final authStateProvider = StreamProvider<UserModel>((ref) {
+  final authRepository = ref.watch(authRepositoryProvider);
+  return authRepository.authStateChanges;
+});
+
+
+final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
+  final authRepository = ref.watch(authRepositoryProvider);
+  return AuthController(authRepository: authRepository);
+});
+
+
+class AuthController extends StateNotifier<AsyncValue<void>> {
+  final AuthRepository _authRepository;
+
+
+  AuthController({
+    required AuthRepository authRepository,
+  }) : _authRepository = authRepository,
+       super(const AsyncValue.data(null));
+
+
+  Future<void> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.signUpWithEmailAndPassword(
+      email: email,
+      password: password,
+      name: name,
+    ));
+  }
+
+
+  Future<void> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    ));
+  }
+
+
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.signInWithGoogle());
+  }
+
+
+  Future<void> signOut() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.signOut());
+  }
+
+
+  Future<void> resetPassword(String email) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.resetPassword(email));
+  }
+
+
+  Future<void> updateUserProfile({
+    String? displayName,
+    String? photoURL,
+  }) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.updateUserProfile(
+      displayName: displayName,
+      photoURL: photoURL,
+    ));
+  }
+
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _authRepository.changePassword(
+      currentPassword, 
+      newPassword,
+    ));
+  }
+}
