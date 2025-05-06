@@ -43,7 +43,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: 'YOUR-SENDER-ID',
     projectId: 'YOUR-PROJECT-ID',
     authDomain: 'YOUR-AUTH-DOMAIN',
-    storageBucket: 'YOUR-STORAGE-BUCKET',
+    storageBucket: 'YOUR-STORAGE-BUCKET', // Expects me to pay
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
     appId: 'YOUR-APP-ID',
     messagingSenderId: 'YOUR-SENDER-ID',
     projectId: 'YOUR-PROJECT-ID',
-    storageBucket: 'YOUR-STORAGE-BUCKET',
+    storageBucket: 'YOUR-STORAGE-BUCKET', // Expects me to pay
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -59,7 +59,7 @@ class DefaultFirebaseOptions {
     appId: 'YOUR-APP-ID',
     messagingSenderId: 'YOUR-SENDER-ID',
     projectId: 'YOUR-PROJECT-ID',
-    storageBucket: 'YOUR-STORAGE-BUCKET',
+    storageBucket: 'YOUR-STORAGE-BUCKET', // Expects me to pay
     iosClientId: 'YOUR-IOS-CLIENT-ID',
     iosBundleId: 'YOUR-IOS-BUNDLE-ID',
   );
@@ -69,7 +69,7 @@ class DefaultFirebaseOptions {
     appId: 'YOUR-APP-ID',
     messagingSenderId: 'YOUR-SENDER-ID',
     projectId: 'YOUR-PROJECT-ID',
-    storageBucket: 'YOUR-STORAGE-BUCKET',
+    storageBucket: 'YOUR-STORAGE-BUCKET', // Expects me to pay
     iosClientId: 'YOUR-IOS-CLIENT-ID',
     iosBundleId: 'YOUR-IOS-BUNDLE-ID',
   );
