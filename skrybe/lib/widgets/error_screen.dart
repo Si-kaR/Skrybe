@@ -12,9 +12,9 @@ class ErrorScreen extends StatelessWidget {
   final String error;
 
   const ErrorScreen({
-    Key? key,
+    super.key,
     required this.error,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

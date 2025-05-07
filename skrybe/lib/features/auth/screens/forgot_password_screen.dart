@@ -8,7 +8,7 @@ import 'package:skrybe/widgets/custom_button.dart';
 import 'package:skrybe/widgets/custom_text_field.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   ConsumerState<ForgotPasswordScreen> createState() =>

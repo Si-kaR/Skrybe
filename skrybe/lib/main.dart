@@ -12,10 +12,23 @@ import 'package:skrybe/core/theme/app_theme.dart';
 import 'package:skrybe/firebase_options.dart';
 import 'package:skrybe/routes/app_router.dart';
 
-import 'firebase_options.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+// ✅ Initialize Firebase only if not already initialized
+  // Initialize services
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+    await Hive.initFlutter();
+    await dotenv.load();
+    await NotificationService.initialize();
+  }
+
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // await Hive.initFlutter();
+  // await dotenv.load();
+  // await NotificationService.initialize();
 
   // Set preferred display mode (high refresh rate)
   if (!kIsWeb) {
@@ -25,12 +38,6 @@ void main() async {
       debugPrint('Could not set high refresh rate: $e');
     }
   }
-
-  // Initialize services
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await Hive.initFlutter();
-  await dotenv.load();
-  await NotificationService.initialize();
 
   // Open important Hive boxes
   await Hive.openBox('settings');

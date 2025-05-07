@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
+import 'package:path/path.dart';
 import 'package:skrybe/core/utils/transition_animations.dart';
+import 'package:skrybe/data/models/transcript_model.dart';
 import 'package:skrybe/data/providers/auth_provider.dart';
 import 'package:skrybe/features/auth/screens/login_screen.dart';
 import 'package:skrybe/features/auth/screens/signup_screen.dart';
@@ -121,10 +123,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.dashboard,
         name: 'dashboard',
-        builder: (context, state) => const DashboardScreen(),
+        builder: (context, state) => DashboardScreen(),
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const DashboardScreen(),
+          child: DashboardScreen(),
           transitionsBuilder: fadeTransition,
         ),
       ),
@@ -158,18 +160,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transitionsBuilder: slideUpTransition,
         ),
       ),
+      // GoRoute(
+      //   path: '${RouteNames.transcription}/:id',
+      //   name: 'transcription_detail',
+      //   builder: (context, state) {
+      //     final transcriptionId = state.pathParameters['id']!;
+      //     return TranscriptionDetailScreen(transcriptionId: transcriptionId);
+      //   },
+      //   pageBuilder: (context, state) {
+      //     final transcriptionId = state.pathParameters['id']!;
+      //     return CustomTransitionPage(
+      //       key: state.pageKey,
+      //       child: TranscriptionDetailScreen(transcriptionId: transcriptionId),
+      //       transitionsBuilder: slideTransition,
+      //     );
+      //   },
+      // ),
       GoRoute(
-        path: '${RouteNames.transcription}/:id',
-        name: 'transcription_detail',
-        builder: (context, state) {
-          final transcriptionId = state.pathParameters['id']!;
-          return TranscriptionDetailScreen(transcriptionId: transcriptionId);
-        },
+        path: '/transcription/:id',
+        name: 'transcriptionDetail',
         pageBuilder: (context, state) {
-          final transcriptionId = state.pathParameters['id']!;
+          final transcript = state.extra as Transcript;
+
           return CustomTransitionPage(
             key: state.pageKey,
-            child: TranscriptionDetailScreen(transcriptionId: transcriptionId),
+            child: TranscriptionDetailScreen(
+              transcript: transcript,
+              transcriptionId: '',
+            ),
             transitionsBuilder: slideTransition,
           );
         },

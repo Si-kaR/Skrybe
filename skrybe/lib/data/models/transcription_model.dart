@@ -367,7 +367,7 @@ final transcriptionDetailProvider =
   final transcriptionRepository = ref.watch(transcriptionRepositoryProvider);
   return transcriptionRepository
       .getTranscriptionById(id)
-      .then((value) => value as TranscriptionModel);
+      .then((value) => value);
 });
 
 class TranscriptionController extends StateNotifier<AsyncValue<void>> {
@@ -380,14 +380,14 @@ class TranscriptionController extends StateNotifier<AsyncValue<void>> {
 
   Future<void> createTranscription(TranscriptionModel transcription) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _transcriptionRepository
-        .createTranscription(transcription as TranscriptionModel));
+    state = await AsyncValue.guard(
+        () => _transcriptionRepository.createTranscription(transcription));
   }
 
   Future<void> updateTranscription(TranscriptionModel transcription) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _transcriptionRepository
-        .updateTranscription(transcription as TranscriptionModel));
+    state = await AsyncValue.guard(
+        () => _transcriptionRepository.updateTranscription(transcription));
   }
 
   Future<void> deleteTranscription(String id) async {

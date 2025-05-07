@@ -10,9 +10,14 @@ enum RecordingState { initial, recording, paused, stopped, error }
 
 class RecordingService {
   final AudioRecorder _recorder;
+  String? _currentPath;
+  final _durationController = StreamController<Duration>.broadcast();
 
   RecordingService({AudioRecorder? recorder})
       : _recorder = recorder ?? AudioRecorder();
+
+  // Stream to get recording duration
+  Stream<Duration> get durationStream => _durationController.stream;
 
   // Check if app has permission to record audio
   Future<bool> checkPermission() async {
@@ -22,7 +27,7 @@ class RecordingService {
   // Start recording
   Future<void> startRecording() async {
     final directory = await getTemporaryDirectory();
-    final filePath = '${directory.path}/${const Uuid().v4()}.m4a';
+    _currentPath = '${directory.path}/${const Uuid().v4()}.m4a';
 
     await _recorder.start(
       RecordConfig(
@@ -30,7 +35,7 @@ class RecordingService {
         bitRate: 128000,
         sampleRate: 44100,
       ),
-      path: filePath,
+      path: _currentPath!,
     );
   }
 
@@ -50,28 +55,39 @@ class RecordingService {
     return path;
   }
 
-  // Get the recording file from path
-  Future<File?> getRecordingFile(String? path) async {
-    if (path == null) return null;
-    return File(path);
-  }
+  // Delete recording file
+  Future<void> deleteRecording() async {
+    if (_currentPath != null) {
+      final file = File(_currentPath!);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      _currentPath = null;
+    }
 
-  // Get recording duration and amplitude
-  Stream<Duration> getRecordingDuration() {
-    return Stream.periodic(const Duration(milliseconds: 100), (count) async {
-      final amplitude = await _recorder.getAmplitude();
-      return Duration(milliseconds: count * 100);
-    }).asyncMap((future) async => await future);
-  }
+    // Get the recording file from path
+    Future<File?> getRecordingFile(String? path) async {
+      if (path == null) return null;
+      return File(path);
+    }
 
-  // Check if recording is in progress
-  Future<bool> isRecording() async {
-    return await _recorder.isRecording();
-  }
+    // Get recording duration and amplitude
+    Stream<Duration> getRecordingDuration() {
+      return Stream.periodic(const Duration(milliseconds: 100), (count) async {
+        final amplitude = await _recorder.getAmplitude();
+        return Duration(milliseconds: count * 100);
+      }).asyncMap((future) async => await future);
+    }
 
-  // Dispose resources
-  Future<void> dispose() async {
-    await _recorder.dispose();
+    // Check if recording is in progress
+    Future<bool> isRecording() async {
+      return await _recorder.isRecording();
+    }
+
+    // Dispose resources
+    Future<void> dispose() async {
+      await _recorder.dispose();
+    }
   }
 }
 
