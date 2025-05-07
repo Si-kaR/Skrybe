@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/grphen/Suite/PACKAGES/FLUTTER/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/grphen/Suite/PACKAGES/ANDROID/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/grphen/Documents/Academics/Year_4/Semester_2/Mobile_App/Projects/Skrybe/Skrybe/skrybe/android/app/.cxx/Debug/1cl2v332/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/grphen/Suite/PACKAGES/ANDROID/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/grphen/Documents/Academics/Year_4/Semester_2/Mobile_App/Projects/Skrybe/Skrybe/skrybe/android/app/.cxx/Debug/1cl2v332/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

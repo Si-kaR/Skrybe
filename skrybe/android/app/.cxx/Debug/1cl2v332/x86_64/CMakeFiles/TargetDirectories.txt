@@ -1,0 +1,2 @@
+/home/grphen/Documents/Academics/Year_4/Semester_2/Mobile_App/Projects/Skrybe/Skrybe/skrybe/android/app/.cxx/Debug/1cl2v332/x86_64/CMakeFiles/edit_cache.dir
+/home/grphen/Documents/Academics/Year_4/Semester_2/Mobile_App/Projects/Skrybe/Skrybe/skrybe/android/app/.cxx/Debug/1cl2v332/x86_64/CMakeFiles/rebuild_cache.dir

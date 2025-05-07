@@ -5,8 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.1'
-        classpath 'com.google.gms:google-services:4.3.15' // For Firebase
+        classpath "com.android.tools.build:gradle:8.2.1"
+        classpath "com.google.gms:google-services:4.3.15" // For Firebase
     }
 }
 
@@ -28,25 +28,3 @@ tasks.register("clean", Delete) {
 }
 
 
-// allprojects {
-//     repositories {
-//         google()
-//         mavenCentral()
-//     }
-// }
-
-// rootProject.buildDir = "../build"
-// subprojects {
-//     project.buildDir = "${rootProject.buildDir}/${project.name}"
-// }
-// subprojects {
-//     project.evaluationDependsOn(":app")
-// }
-
-// tasks.register("clean", Delete) {
-//     delete rootProject.buildDir
-// }
-
-// dependencies {
-//     classpath 'com.android.tools.build:gradle:8.2.1'
-// }
