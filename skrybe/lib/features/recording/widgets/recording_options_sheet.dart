@@ -4,7 +4,7 @@ import 'package:skrybe/features/recording/screens/recording_screen.dart';
 import 'package:skrybe/features/upload/screens/upload_screen.dart';
 
 class RecordingOptionsSheet extends ConsumerWidget {
-  const RecordingOptionsSheet({Key? key}) : super(key: key);
+  const RecordingOptionsSheet({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

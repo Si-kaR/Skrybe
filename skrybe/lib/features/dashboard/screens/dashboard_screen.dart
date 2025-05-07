@@ -4,12 +4,11 @@ import 'package:skrybe/features/transcription/screens/transcription_detail_scree
 import 'package:skrybe/features/profile/screens/profile_screen.dart';
 import 'package:skrybe/features/notifications/screens/notifications_screen.dart';
 import 'package:skrybe/features/recording/widgets/recording_options_sheet.dart';
-import 'package:skrybe/data/models/transcript_model.dart';
 import 'package:skrybe/data/providers/transcript_provider.dart';
 import 'package:skrybe/widgets/transcript_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   _DashboardScreenState createState() => _DashboardScreenState();

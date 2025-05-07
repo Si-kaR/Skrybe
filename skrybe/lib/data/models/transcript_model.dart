@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class Transcript {
   final String id;
   final String title;

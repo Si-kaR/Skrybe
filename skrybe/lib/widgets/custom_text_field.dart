@@ -1,7 +1,6 @@
 // TODO Implement this library.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;

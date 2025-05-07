@@ -7,10 +7,10 @@ class TranscriptCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const TranscriptCard({
-    Key? key,
+    super.key,
     required this.transcript,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

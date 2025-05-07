@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
-import 'package:path/path.dart';
 import 'package:skrybe/core/utils/transition_animations.dart';
 import 'package:skrybe/data/models/transcript_model.dart';
 import 'package:skrybe/data/providers/auth_provider.dart';
@@ -22,6 +21,7 @@ import 'package:skrybe/widgets/error_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  print("🔑 isLoggedIn: $authState");
 
   return GoRouter(
     initialLocation: RouteNames.splash,
@@ -31,15 +31,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
     redirect: (BuildContext context, GoRouterState state) {
       // Get whether the user has seen onboarding
-      final hasSeenOnboarding = ref.read(onboardingCompletedProvider);
+      final hasSeenOnboarding = Hive.box('settings')
+              .get('onboardingCompleted', defaultValue: false) ==
+          true;
+      // final hasSeenOnboarding = ref.read(onboardingCompletedProvider);
 
       // Handle authentication redirects
       final isAuthenticated = authState.valueOrNull ?? false;
-      final isLoggingIn = state.uri.toString() == RouteNames.login;
+      // final isLoggingIn = state.uri.toString() == RouteNames.login;
+      final isLoggingIn = state.matchedLocation == RouteNames.login;
       final isSigningUp = state.uri.toString() == RouteNames.signup;
       final isOnboarding = state.uri.toString() == RouteNames.onboarding;
       final isWelcome = state.uri.toString() == RouteNames.welcome;
       final isSplash = state.uri.toString() == RouteNames.splash;
+
+      bool isPublicRoute(String location) {
+        return [
+          RouteNames.login,
+          RouteNames.signup,
+          RouteNames.onboarding,
+          RouteNames.welcome,
+          RouteNames.splash,
+        ].contains(location);
+      }
 
       // Always allow splash screen
       if (isSplash) return null;
@@ -50,12 +64,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       // Handle authentication flow
-      if (!isAuthenticated) {
-        if (isLoggingIn || isSigningUp || isWelcome || isOnboarding) {
-          return null;
-        }
+      if (!isAuthenticated && !isPublicRoute(state.matchedLocation)) {
         return RouteNames.welcome;
       }
+
+      // if (!isAuthenticated) {
+      //   if (isLoggingIn || isSigningUp || isWelcome || isOnboarding) {
+      //     return null;
+      //   }
+      //   return RouteNames.welcome;
+      // }
 
       // If the user is authenticated but on an auth screen, redirect to dashboard
       if (isAuthenticated && (isLoggingIn || isSigningUp || isWelcome)) {

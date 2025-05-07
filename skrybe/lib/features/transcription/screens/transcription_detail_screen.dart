@@ -7,10 +7,10 @@ class TranscriptionDetailScreen extends StatefulWidget {
   final Transcript transcript;
 
   const TranscriptionDetailScreen({
-    Key? key,
+    super.key,
     required this.transcript,
     required String transcriptionId,
-  }) : super(key: key);
+  });
 
   @override
   _TranscriptionDetailScreenState createState() =>
@@ -151,7 +151,10 @@ class _TranscriptionDetailScreenState extends State<TranscriptionDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

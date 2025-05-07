@@ -5,11 +5,9 @@ import 'package:equatable/equatable.dart';
 import 'package:uuid/uuid.dart';
 
 // lib/data/providers/transcription_provider.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:skrybe/data/models/transcription_model.dart';
 import 'package:skrybe/data/repositories/transcription_repository.dart';
 
 enum TranscriptionStatus {

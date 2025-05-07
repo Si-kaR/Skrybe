@@ -2,12 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skrybe/core/services/recording_service.dart';
-import 'package:skrybe/data/models/transcript_model.dart';
 import 'package:skrybe/data/providers/transcript_provider.dart';
 import 'package:skrybe/features/transcription/screens/transcription_detail_screen.dart';
 
 class RecordingScreen extends ConsumerStatefulWidget {
-  const RecordingScreen({Key? key}) : super(key: key);
+  const RecordingScreen({super.key});
 
   @override
   _RecordingScreenState createState() => _RecordingScreenState();

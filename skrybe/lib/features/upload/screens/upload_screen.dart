@@ -13,7 +13,7 @@ import 'package:skrybe/data/providers/transcript_provider.dart';
 import 'package:skrybe/features/transcription/screens/transcription_detail_screen.dart';
 
 class UploadScreen extends ConsumerStatefulWidget {
-  const UploadScreen({Key? key}) : super(key: key);
+  const UploadScreen({super.key});
 
   @override
   _UploadScreenState createState() => _UploadScreenState();
