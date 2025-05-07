@@ -29,59 +29,87 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     errorBuilder: (context, state) => ErrorScreen(
       error: state.error.toString(),
     ),
+    // redirect: (BuildContext context, GoRouterState state) {
+    //   // Get whether the user has seen onboarding
+    //   final hasSeenOnboarding = Hive.box('settings')
+    //           .get('onboardingCompleted', defaultValue: false) ==
+    //       true;
+    //   // final hasSeenOnboarding = ref.read(onboardingCompletedProvider);
+
+    //   // Handle authentication redirects
+    //   final isAuthenticated = authState.valueOrNull ?? false;
+    //   // final isLoggingIn = state.uri.toString() == RouteNames.login;
+    //   final isLoggingIn = state.matchedLocation == RouteNames.login;
+    //   final isSigningUp = state.uri.toString() == RouteNames.signup;
+    //   final isOnboarding = state.uri.toString() == RouteNames.onboarding;
+    //   final isWelcome = state.uri.toString() == RouteNames.welcome;
+    //   final isSplash = state.uri.toString() == RouteNames.splash;
+
+    //   bool isPublicRoute(String location) {
+    //     return [
+    //       RouteNames.login,
+    //       RouteNames.signup,
+    //       RouteNames.onboarding,
+    //       RouteNames.welcome,
+    //       RouteNames.splash,
+    //     ].contains(location);
+    //   }
+
+    //   // Always allow splash screen
+    //   if (isSplash) return null;
+
+    //   // Handle onboarding flow
+    //   if (!hasSeenOnboarding && !isOnboarding && !isSplash) {
+    //     return RouteNames.onboarding;
+    //   }
+
+    //   // Handle authentication flow
+    //   if (!isAuthenticated && !isPublicRoute(state.matchedLocation)) {
+    //     return RouteNames.welcome;
+    //   }
+
+    //   // if (!isAuthenticated) {
+    //   //   if (isLoggingIn || isSigningUp || isWelcome || isOnboarding) {
+    //   //     return null;
+    //   //   }
+    //   //   return RouteNames.welcome;
+    //   // }
+
+    //   // If the user is authenticated but on an auth screen, redirect to dashboard
+    //   if (isAuthenticated && (isLoggingIn || isSigningUp || isWelcome)) {
+    //     return RouteNames.dashboard;
+    //   }
+
+    //   return null;
+    // },
+
     redirect: (BuildContext context, GoRouterState state) {
-      // Get whether the user has seen onboarding
-      final hasSeenOnboarding = Hive.box('settings')
-              .get('onboardingCompleted', defaultValue: false) ==
-          true;
-      // final hasSeenOnboarding = ref.read(onboardingCompletedProvider);
-
-      // Handle authentication redirects
-      final isAuthenticated = authState.valueOrNull ?? false;
-      // final isLoggingIn = state.uri.toString() == RouteNames.login;
-      final isLoggingIn = state.matchedLocation == RouteNames.login;
-      final isSigningUp = state.uri.toString() == RouteNames.signup;
-      final isOnboarding = state.uri.toString() == RouteNames.onboarding;
-      final isWelcome = state.uri.toString() == RouteNames.welcome;
-      final isSplash = state.uri.toString() == RouteNames.splash;
-
-      bool isPublicRoute(String location) {
-        return [
-          RouteNames.login,
-          RouteNames.signup,
-          RouteNames.onboarding,
-          RouteNames.welcome,
-          RouteNames.splash,
-        ].contains(location);
+      bool hasSeenOnboarding = false;
+      try {
+        final settingsBox = Hive.box('settings');
+        hasSeenOnboarding =
+            settingsBox.get('onboardingCompleted', defaultValue: false) == true;
+      } catch (e) {
+        debugPrint('Error reading onboardingCompleted: $e');
       }
 
-      // Always allow splash screen
-      if (isSplash) return null;
+      final isAuthenticated = authState.valueOrNull ?? false;
+      final isLoggingIn = state.matchedLocation == RouteNames.login;
+      final isSignup = state.matchedLocation == RouteNames.signup;
 
-      // Handle onboarding flow
-      if (!hasSeenOnboarding && !isOnboarding && !isSplash) {
+      if (!hasSeenOnboarding &&
+          state.matchedLocation != RouteNames.onboarding) {
         return RouteNames.onboarding;
       }
 
-      // Handle authentication flow
-      if (!isAuthenticated && !isPublicRoute(state.matchedLocation)) {
-        return RouteNames.welcome;
-      }
-
-      // if (!isAuthenticated) {
-      //   if (isLoggingIn || isSigningUp || isWelcome || isOnboarding) {
-      //     return null;
-      //   }
-      //   return RouteNames.welcome;
-      // }
-
-      // If the user is authenticated but on an auth screen, redirect to dashboard
-      if (isAuthenticated && (isLoggingIn || isSigningUp || isWelcome)) {
-        return RouteNames.dashboard;
+      if (!isAuthenticated &&
+          !(isLoggingIn || isSignup || !hasSeenOnboarding)) {
+        return RouteNames.login;
       }
 
       return null;
     },
+
     routes: [
       // Splash and Onboarding Routes
       GoRoute(
@@ -215,7 +243,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 final onboardingCompletedProvider = Provider<bool>((ref) {
-  // In a real app, this would be loaded from local storage
-  final settings = Hive.box('settings');
-  return settings.get('onboardingCompleted', defaultValue: false);
+  try {
+    final settings = Hive.box('settings');
+    return settings.get('onboardingCompleted', defaultValue: false);
+  } catch (e) {
+    debugPrint('Failed to get onboardingCompleted: $e');
+    return false;
+  }
 });
+
+// final onboardingCompletedProvider = Provider<bool>((ref) {
+//   // In a real app, this would be loaded from local storage
+//   final settings = Hive.box('settings');
+//   return settings.get('onboardingCompleted', defaultValue: false);
+// });

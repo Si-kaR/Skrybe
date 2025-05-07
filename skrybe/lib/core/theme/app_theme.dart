@@ -1,5 +1,3 @@
-// TODO Implement this library.
-
 // lib/core/theme/app_theme.dart
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 
@@ -12,21 +10,49 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
 );
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(_loadThemeMode());
+// class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+//   ThemeModeNotifier() : super(_loadThemeMode());
 
-  static ThemeMode _loadThemeMode() {
-    final settings = Hive.box('settings');
-    final themeModeIndex = settings.get('themeMode', defaultValue: 0);
-    return ThemeMode.values[themeModeIndex];
+//   static ThemeMode _loadThemeMode() {
+//     final settings = Hive.box('settings');
+//     final themeModeIndex = settings.get('themeMode', defaultValue: 0);
+//     return ThemeMode.values[themeModeIndex];
+//   }
+
+//   void toggleTheme() {
+//     final newMode = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+//     state = newMode;
+
+//     final settings = Hive.box('settings');
+//     settings.put('themeMode', newMode.index);
+//   }
+// }
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(ThemeMode.system) {
+    _loadThemeMode();
+  }
+
+  void _loadThemeMode() {
+    try {
+      final settings = Hive.box('settings');
+      final themeModeIndex = settings.get('themeMode', defaultValue: 0);
+      state = ThemeMode.values[themeModeIndex];
+    } catch (e) {
+      debugPrint('Failed to load theme mode: $e');
+      state = ThemeMode.system;
+    }
   }
 
   void toggleTheme() {
     final newMode = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     state = newMode;
 
-    final settings = Hive.box('settings');
-    settings.put('themeMode', newMode.index);
+    try {
+      final settings = Hive.box('settings');
+      settings.put('themeMode', newMode.index);
+    } catch (e) {
+      debugPrint('Failed to save theme mode: $e');
+    }
   }
 }
 
