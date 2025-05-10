@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skrybe/core/utils/transition_animations.dart';
 import 'package:skrybe/data/models/transcript_model.dart';
 import 'package:skrybe/data/providers/auth_provider.dart';
+import 'package:skrybe/features/auth/screens/forgot_password_screen.dart';
 import 'package:skrybe/features/auth/screens/login_screen.dart';
 import 'package:skrybe/features/auth/screens/signup_screen.dart';
 import 'package:skrybe/features/dashboard/screens/dashboard_screen.dart';
@@ -19,9 +21,70 @@ import 'package:skrybe/features/upload/screens/upload_screen.dart';
 import 'package:skrybe/routes/route_names.dart';
 import 'package:skrybe/widgets/error_screen.dart';
 
+// Fixed: Moved welcomeCompletedProvider outside of onboardingCompletedProvider
+final welcomeCompletedProvider = FutureProvider<bool>((ref) async {
+  try {
+    if (Hive.isBoxOpen('settings')) {
+      final settingsBox = Hive.box('settings');
+      return settingsBox.get('welcomeCompleted', defaultValue: false);
+    } else {
+      final settingsBox = await Hive.openBox('settings');
+      return settingsBox.get('welcomeCompleted', defaultValue: false);
+    }
+  } catch (e) {
+    debugPrint('❌ Error getting welcomeCompleted: $e');
+    return false;
+  }
+});
+
+final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
+  // Try to check onboarding status from Hive first
+  try {
+    if (Hive.isBoxOpen('settings')) {
+      final settingsBox = Hive.box('settings');
+      final value = settingsBox.get('onboardingCompleted', defaultValue: false);
+      debugPrint('📋 Hive onboardingCompleted: $value');
+      return value;
+    } else {
+      // Try to open the box
+      try {
+        final settingsBox = await Hive.openBox('settings');
+        final value =
+            settingsBox.get('onboardingCompleted', defaultValue: false);
+        debugPrint('📋 Hive onboardingCompleted (after opening): $value');
+        return value;
+      } catch (e) {
+        debugPrint('❌ Could not open Hive box: $e');
+      }
+    }
+  } catch (e) {
+    debugPrint('❌ Error checking onboarding status from Hive: $e');
+  }
+
+  // Fallback to SharedPreferences
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getBool('onboardingCompleted') ?? false;
+    debugPrint('📋 SharedPreferences onboardingCompleted: $value');
+    return value;
+  } catch (e) {
+    debugPrint('❌ Error checking onboarding status from SharedPreferences: $e');
+    return false;
+  }
+});
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
-  print("🔑 isLoggedIn: $authState");
+  final onboardingCompletedState = ref.watch(onboardingCompletedProvider);
+  final welcomeCompletedState = ref.watch(welcomeCompletedProvider);
+
+  final isAuthenticated = authState.valueOrNull ?? false;
+  final hasSeenOnboarding = onboardingCompletedState.valueOrNull ?? false;
+  final hasCompletedWelcome = welcomeCompletedState.valueOrNull ?? false;
+
+  debugPrint("🔑 isLoggedIn: $isAuthenticated");
+  debugPrint("🚀 hasSeenOnboarding: $hasSeenOnboarding");
+  debugPrint("👋 hasCompletedWelcome: $hasCompletedWelcome");
 
   return GoRouter(
     initialLocation: RouteNames.splash,
@@ -29,87 +92,64 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     errorBuilder: (context, state) => ErrorScreen(
       error: state.error.toString(),
     ),
-    // redirect: (BuildContext context, GoRouterState state) {
-    //   // Get whether the user has seen onboarding
-    //   final hasSeenOnboarding = Hive.box('settings')
-    //           .get('onboardingCompleted', defaultValue: false) ==
-    //       true;
-    //   // final hasSeenOnboarding = ref.read(onboardingCompletedProvider);
-
-    //   // Handle authentication redirects
-    //   final isAuthenticated = authState.valueOrNull ?? false;
-    //   // final isLoggingIn = state.uri.toString() == RouteNames.login;
-    //   final isLoggingIn = state.matchedLocation == RouteNames.login;
-    //   final isSigningUp = state.uri.toString() == RouteNames.signup;
-    //   final isOnboarding = state.uri.toString() == RouteNames.onboarding;
-    //   final isWelcome = state.uri.toString() == RouteNames.welcome;
-    //   final isSplash = state.uri.toString() == RouteNames.splash;
-
-    //   bool isPublicRoute(String location) {
-    //     return [
-    //       RouteNames.login,
-    //       RouteNames.signup,
-    //       RouteNames.onboarding,
-    //       RouteNames.welcome,
-    //       RouteNames.splash,
-    //     ].contains(location);
-    //   }
-
-    //   // Always allow splash screen
-    //   if (isSplash) return null;
-
-    //   // Handle onboarding flow
-    //   if (!hasSeenOnboarding && !isOnboarding && !isSplash) {
-    //     return RouteNames.onboarding;
-    //   }
-
-    //   // Handle authentication flow
-    //   if (!isAuthenticated && !isPublicRoute(state.matchedLocation)) {
-    //     return RouteNames.welcome;
-    //   }
-
-    //   // if (!isAuthenticated) {
-    //   //   if (isLoggingIn || isSigningUp || isWelcome || isOnboarding) {
-    //   //     return null;
-    //   //   }
-    //   //   return RouteNames.welcome;
-    //   // }
-
-    //   // If the user is authenticated but on an auth screen, redirect to dashboard
-    //   if (isAuthenticated && (isLoggingIn || isSigningUp || isWelcome)) {
-    //     return RouteNames.dashboard;
-    //   }
-
-    //   return null;
-    // },
-
     redirect: (BuildContext context, GoRouterState state) {
-      bool hasSeenOnboarding = false;
-      try {
-        final settingsBox = Hive.box('settings');
-        hasSeenOnboarding =
-            settingsBox.get('onboardingCompleted', defaultValue: false) == true;
-      } catch (e) {
-        debugPrint('Error reading onboardingCompleted: $e');
-      }
+      final loc = state.matchedLocation;
+      final isSplash = loc == RouteNames.splash;
+      final isOnboarding = loc == RouteNames.onboarding;
+      final isWelcome = loc == RouteNames.welcome;
+      final isLoggingIn = loc == RouteNames.login;
+      final isSignup = loc == RouteNames.signup;
+      final isForgotPassword = loc == RouteNames.forgotPassword;
+      final isAuthScreen = isLoggingIn || isSignup || isForgotPassword;
 
-      final isAuthenticated = authState.valueOrNull ?? false;
-      final isLoggingIn = state.matchedLocation == RouteNames.login;
-      final isSignup = state.matchedLocation == RouteNames.signup;
+      debugPrint('📍 Current location: $loc');
+      debugPrint('🔐 Authenticated: $isAuthenticated');
+      debugPrint('🎬 Onboarding done: $hasSeenOnboarding');
+      debugPrint('👋 Welcome done: $hasCompletedWelcome');
 
-      if (!hasSeenOnboarding &&
-          state.matchedLocation != RouteNames.onboarding) {
+      // 1. Allow access to splash screen always
+      if (isSplash) return null;
+
+      // 2. If onboarding is not completed, redirect to onboarding
+      if (!hasSeenOnboarding && !isOnboarding) {
+        debugPrint('🔄 Redirecting to onboarding (onboarding not completed)');
         return RouteNames.onboarding;
       }
 
-      if (!isAuthenticated &&
-          !(isLoggingIn || isSignup || !hasSeenOnboarding)) {
+      // 3. If onboarding is completed but welcome is not, handle welcome flow
+      if (hasSeenOnboarding && !hasCompletedWelcome && !isAuthenticated) {
+        // Allow navigation to auth screens from welcome
+        if (isAuthScreen) {
+          debugPrint('✅ Allowing navigation to auth screen from welcome');
+          return null;
+        }
+        // Otherwise redirect to welcome
+        if (!isWelcome) {
+          debugPrint('🔄 Redirecting to welcome (welcome not completed)');
+          return RouteNames.welcome;
+        }
+        return null;
+      }
+
+      // 4. Auth flow - if onboarding is complete and not authenticated
+      if (hasSeenOnboarding &&
+          hasCompletedWelcome &&
+          !isAuthenticated &&
+          !isAuthScreen) {
+        debugPrint('🔄 Not authenticated, redirecting to login');
         return RouteNames.login;
       }
 
+      // 5. If authenticated but viewing auth screens, redirect to dashboard
+      if (isAuthenticated && (isAuthScreen || isOnboarding || isWelcome)) {
+        debugPrint('🔄 User authenticated, redirecting to dashboard');
+        return RouteNames.dashboard;
+      }
+
+      // 6. Allow normal navigation
+      debugPrint('✅ No redirection needed for $loc');
       return null;
     },
-
     routes: [
       // Splash and Onboarding Routes
       GoRoute(
@@ -164,18 +204,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transitionsBuilder: slideTransition,
         ),
       ),
+      GoRoute(
+        path: RouteNames.forgotPassword,
+        name: 'forgotPassword',
+        builder: (context, state) => const ForgotPasswordScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ForgotPasswordScreen(),
+          transitionsBuilder: slideTransition,
+        ),
+      ),
 
       // Main App Routes
       GoRoute(
         path: RouteNames.dashboard,
         name: 'dashboard',
-        builder: (context, state) => DashboardScreen(),
+        builder: (context, state) => const DashboardScreen(child: SizedBox()),
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: DashboardScreen(),
+          child: const DashboardScreen(child: SizedBox()),
           transitionsBuilder: fadeTransition,
         ),
       ),
+
       GoRoute(
         path: RouteNames.profile,
         name: 'profile',
@@ -206,22 +257,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transitionsBuilder: slideUpTransition,
         ),
       ),
-      // GoRoute(
-      //   path: '${RouteNames.transcription}/:id',
-      //   name: 'transcription_detail',
-      //   builder: (context, state) {
-      //     final transcriptionId = state.pathParameters['id']!;
-      //     return TranscriptionDetailScreen(transcriptionId: transcriptionId);
-      //   },
-      //   pageBuilder: (context, state) {
-      //     final transcriptionId = state.pathParameters['id']!;
-      //     return CustomTransitionPage(
-      //       key: state.pageKey,
-      //       child: TranscriptionDetailScreen(transcriptionId: transcriptionId),
-      //       transitionsBuilder: slideTransition,
-      //     );
-      //   },
-      // ),
       GoRoute(
         path: '/transcription/:id',
         name: 'transcriptionDetail',
@@ -241,19 +276,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-final onboardingCompletedProvider = Provider<bool>((ref) {
-  try {
-    final settings = Hive.box('settings');
-    return settings.get('onboardingCompleted', defaultValue: false);
-  } catch (e) {
-    debugPrint('Failed to get onboardingCompleted: $e');
-    return false;
-  }
-});
-
-// final onboardingCompletedProvider = Provider<bool>((ref) {
-//   // In a real app, this would be loaded from local storage
-//   final settings = Hive.box('settings');
-//   return settings.get('onboardingCompleted', defaultValue: false);
-// });

@@ -6,27 +6,57 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+// Add AppThemeState class that was referenced in the profile screen
+class AppThemeState {
+  final ThemeMode themeMode;
+
+  AppThemeState({required this.themeMode});
+
+  AppThemeState copyWith({ThemeMode? themeMode}) {
+    return AppThemeState(
+      themeMode: themeMode ?? this.themeMode,
+    );
+  }
+}
+
+// Create a StateNotifier for managing theme state
+class AppThemeNotifier extends StateNotifier<AppThemeState> {
+  AppThemeNotifier() : super(AppThemeState(themeMode: ThemeMode.system)) {
+    _loadThemeMode();
+  }
+
+  void _loadThemeMode() {
+    try {
+      final settings = Hive.box('settings');
+      final themeModeIndex = settings.get('themeMode', defaultValue: 0);
+      state = AppThemeState(themeMode: ThemeMode.values[themeModeIndex]);
+    } catch (e) {
+      debugPrint('Failed to load theme mode: $e');
+      state = AppThemeState(themeMode: ThemeMode.system);
+    }
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    state = state.copyWith(themeMode: mode);
+    try {
+      final settings = Hive.box('settings');
+      settings.put('themeMode', mode.index);
+    } catch (e) {
+      debugPrint('Failed to save theme mode: $e');
+    }
+  }
+}
+
+// Add appThemeProvider that was referenced in profile_screen
+final appThemeProvider =
+    StateNotifierProvider<AppThemeNotifier, AppThemeState>((ref) {
+  return AppThemeNotifier();
+});
+
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
 );
 
-// class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-//   ThemeModeNotifier() : super(_loadThemeMode());
-
-//   static ThemeMode _loadThemeMode() {
-//     final settings = Hive.box('settings');
-//     final themeModeIndex = settings.get('themeMode', defaultValue: 0);
-//     return ThemeMode.values[themeModeIndex];
-//   }
-
-//   void toggleTheme() {
-//     final newMode = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-//     state = newMode;
-
-//     final settings = Hive.box('settings');
-//     settings.put('themeMode', newMode.index);
-//   }
-// }
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   ThemeModeNotifier() : super(ThemeMode.system) {
     _loadThemeMode();
@@ -46,10 +76,18 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   void toggleTheme() {
     final newMode = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     state = newMode;
+    _saveThemeMode(newMode);
+  }
 
+  void setThemeMode(ThemeMode mode) {
+    state = mode;
+    _saveThemeMode(mode);
+  }
+
+  void _saveThemeMode(ThemeMode mode) {
     try {
       final settings = Hive.box('settings');
-      settings.put('themeMode', newMode.index);
+      settings.put('themeMode', mode.index);
     } catch (e) {
       debugPrint('Failed to save theme mode: $e');
     }

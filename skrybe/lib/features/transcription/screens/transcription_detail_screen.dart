@@ -5,11 +5,12 @@ import 'package:skrybe/data/models/transcript_model.dart';
 
 class TranscriptionDetailScreen extends StatefulWidget {
   final Transcript transcript;
+  final String transcriptionId; // Add this field
 
   const TranscriptionDetailScreen({
     super.key,
     required this.transcript,
-    required String transcriptionId,
+    required this.transcriptionId, // Store transcriptionId as a field
   });
 
   @override

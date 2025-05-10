@@ -4,20 +4,28 @@ import 'package:skrybe/features/transcription/screens/transcription_detail_scree
 import 'package:skrybe/features/profile/screens/profile_screen.dart';
 import 'package:skrybe/features/notifications/screens/notifications_screen.dart';
 import 'package:skrybe/features/recording/widgets/recording_options_sheet.dart';
+import 'package:skrybe/features/history/history_screen.dart';
+import 'package:skrybe/features/settings/settings_screen.dart';
 import 'package:skrybe/data/providers/transcript_provider.dart';
 import 'package:skrybe/widgets/transcript_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, required SizedBox child});
 
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fabAnimation;
+  int _currentIndex = 0;
+  final List<Widget> _screens = const [
+    _HomeContent(),
+    HistoryScreen(),
+    SettingsScreen(),
+  ];
 
   @override
   void initState() {
@@ -43,8 +51,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final transcriptsAsyncValue = ref.watch(transcriptsProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Skrybe'),
@@ -70,67 +76,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ],
       ),
-      body: transcriptsAsyncValue.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (transcripts) {
-          if (transcripts.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.description_outlined,
-                    size: 100,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No transcripts yet',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the button below to start recording or upload an audio file',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            itemCount: transcripts.length,
-            itemBuilder: (context, index) {
-              return TranscriptCard(
-                transcript: transcripts[index],
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TranscriptionDetailScreen(
-                        transcript: transcripts[index],
-                        transcriptionId: '',
-                      ),
-                    ),
-                  );
+      body: _screens[_currentIndex],
+      floatingActionButton: _currentIndex == 0
+          ? ScaleTransition(
+              scale: _fabAnimation,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  _showRecordingOptions(context);
                 },
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: ScaleTransition(
-        scale: _fabAnimation,
-        child: FloatingActionButton.extended(
-          onPressed: () {
-            _showRecordingOptions(context);
-          },
-          icon: const Icon(Icons.mic),
-          label: const Text('New Transcription'),
-        ),
-      ),
+                icon: const Icon(Icons.mic),
+                label: const Text('New Transcription'),
+              ),
+            )
+          : null,
       bottomNavigationBar: NavigationBar(
         destinations: const [
           NavigationDestination(
@@ -150,9 +108,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ],
         onDestinationSelected: (int index) {
-          // Handle navigation
+          setState(() {
+            _currentIndex = index;
+          });
         },
-        selectedIndex: 0,
+        selectedIndex: _currentIndex,
       ),
     );
   }
@@ -165,6 +125,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) => const RecordingOptionsSheet(),
+    );
+  }
+}
+
+class _HomeContent extends ConsumerWidget {
+  const _HomeContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final transcriptsAsyncValue = ref.watch(transcriptionRepositoryProvider);
+
+    return transcriptsAsyncValue.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
+      data: (transcripts) {
+        if (transcripts.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.description_outlined,
+                  size: 100,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No transcripts yet',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap the button below to start recording or upload an audio file',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: transcripts.length,
+          itemBuilder: (context, index) {
+            return TranscriptCard(
+              transcript: transcripts[index],
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TranscriptionDetailScreen(
+                      transcript: transcripts[index],
+                      transcriptionId: '',
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

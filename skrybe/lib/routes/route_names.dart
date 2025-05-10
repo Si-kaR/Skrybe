@@ -13,11 +13,21 @@ class RouteNames {
   static const String forgotPassword = '/forgot-password';
 
   // Main App Routes
-  static const String dashboard = '/dashboard';
-
+  static const String home = '/home';
+  static const String transcription = '/transcription';
+  static const String transcriptionDetail = '/transcription/:id';
+  static const String newtranscription = '/new-transcription';
+  static const String settings = '/settings';
   static const String profile = '/profile';
-
+  static const String feedback = '/feedback';
+  static const String about = '/about';
+  static const String terms = '/terms';
+  static const String privacy = '/privacy';
+  static const String contact = '/contact';
+  static const String help = '/help';
+  static const String notifications = '/notifications';
+  static const String upgrade = '/upgrade';
+  static const String dashboard = '/dashboard';
   static const String record = '/record';
-
   static const String upload = '/upload';
 }

@@ -2,6 +2,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:equatable/equatable.dart';
+import 'package:skrybe/core/services/transcription_service.dart';
+import 'package:skrybe/data/models/transcript_model.dart';
 import 'package:uuid/uuid.dart';
 
 // lib/data/providers/transcription_provider.dart
@@ -257,26 +259,6 @@ class TranscriptionModel extends Equatable {
         isDeleted,
       ];
 
-  // Map<String, dynamic> toFirestore() {
-  //   return {
-  //     'userId': userId,
-  //     'title': title,
-  //     'description': description,
-  //     'content': content,
-  //     'source': source.name,
-  //     'status': status.name,
-  //     'audioUrl': rawaudioUrl,
-  //     'videoUrl': rawvideoUrl,
-  //     'duration': duration,
-  //     'createdAt': FieldValue.serverTimestamp(),
-  //     'updatedAt': FieldValue.serverTimestamp(),
-  //     'metadata': metadata,
-  //     // // 'tags': tags,
-  //     'isFavorite': isFavorite,
-  //     'isDeleted': isDeleted,
-  //   };
-  // }
-
   factory TranscriptionModel.fromMap(Map<String, dynamic> map) {
     return TranscriptionModel(
       id: map['id'] ?? const Uuid().v4(),
@@ -335,22 +317,29 @@ class TranscriptionModel extends Equatable {
     final seconds = (duration! % 60).toInt().toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
+
+  get summary => null;
 }
+
+final transcriptionServiceProvider = Provider<TranscriptionService>((ref) {
+  return TranscriptionService();
+});
 
 final transcriptionRepositoryProvider =
     Provider<TranscriptionRepository>((ref) {
   return TranscriptionRepository(
-    FirebaseFirestore.instance,
-    FirebaseStorage.instance,
-    FirebaseAuth.instance,
-    FirebaseFunctions.instance,
+    firestore: FirebaseFirestore.instance,
+    storage: FirebaseStorage.instance,
+    auth: FirebaseAuth.instance,
+    functions: FirebaseFunctions.instance,
+    transcriptionService: ref.watch(transcriptionServiceProvider),
   );
 });
 
 final userTranscriptionsProvider =
     StreamProvider<List<TranscriptionModel>>((ref) {
   final transcriptionRepository = ref.watch(transcriptionRepositoryProvider);
-  return transcriptionRepository.getUserTranscriptions();
+  return transcriptionRepository.getAllTranscriptions();
 });
 
 final transcriptionControllerProvider =
@@ -363,9 +352,7 @@ final transcriptionControllerProvider =
 final transcriptionDetailProvider =
     FutureProvider.family<TranscriptionModel, String>((ref, id) {
   final transcriptionRepository = ref.watch(transcriptionRepositoryProvider);
-  return transcriptionRepository
-      .getTranscriptionById(id)
-      .then((value) => value);
+  return transcriptionRepository.getTranscriptById(id).then((value) => value);
 });
 
 class TranscriptionController extends StateNotifier<AsyncValue<void>> {
@@ -391,7 +378,7 @@ class TranscriptionController extends StateNotifier<AsyncValue<void>> {
   Future<void> deleteTranscription(String id) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-        () => _transcriptionRepository.deleteTranscription(id));
+        () => _transcriptionRepository.deleteTranscript(id));
   }
 
   Future<void> toggleFavorite(String id, bool isFavorite) async {
@@ -403,39 +390,35 @@ class TranscriptionController extends StateNotifier<AsyncValue<void>> {
   Future<String> uploadAudioFile(String filePath, String fileName) async {
     state = const AsyncValue.loading();
     final result = await AsyncValue.guard(
-        () => _transcriptionRepository.uploadAudioFile(filePath, fileName));
+        () => _transcriptionRepository.transcribeAudioFile(
+              filePath,
+              title: fileName,
+            ));
     state = result;
     if (result.hasError) {
       throw result.error!;
     }
-    return result.value!;
+    return result
+        .value!.id; // Assuming 'id' is the String field you want to return
   }
 
   Future<String> uploadVideoFile(String filePath, String fileName) async {
     state = const AsyncValue.loading();
-    final result = await AsyncValue.guard(
-        () => _transcriptionRepository.uploadVideoFile(filePath, fileName));
+    final result = await AsyncValue.guard(() => _transcriptionRepository
+        .transcribeVideoFile(filePath, fileName, title: fileName));
     state = result;
     if (result.hasError) {
       throw result.error!;
     }
-    return result.value!;
+    return result
+        .value!.id; // Assuming 'id' is the String field you want to return
   }
 
-  // Future<String> transcribeAudio(String audioUrl) async {
-  //   state = const AsyncValue.loading();
-  //   final result = await AsyncValue.guard(
-  //       () => _transcriptionRepository.transcribeAudio(audioUrl));
-  //   state = result;
-  //   if (result.hasError) {
-  //     throw result.error!;
-  //   }
-  //   return result.value!;
-  // }
-  Future<String> transcribeAudio(String audioUrl) async {
+  Future<Transcript> transcribeAudio(String audioUrl) async {
     state = const AsyncValue.loading();
     try {
-      final result = await _transcriptionRepository.transcribeAudio(audioUrl);
+      final result = await _transcriptionRepository
+          .transcribeAudioFile(audioUrl, title: '');
       state = AsyncValue.data(result);
       return result;
     } catch (error, stackTrace) {

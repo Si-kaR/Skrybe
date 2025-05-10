@@ -1,8 +1,7 @@
-// TODO Implement this library.
-
 // lib/data/repositories/auth_repository.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:skrybe/data/models/user_model.dart';
 
 class AuthRepository {
@@ -89,6 +88,53 @@ class AuthRepository {
 
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // // User canceled the sign-in
+        // throw Exception('Sign-in aborted by user');
+        return; // Handle this case as per your app's requirement
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credentials
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        final userDoc = _firestore.collection('users').doc(user.uid);
+        final docSnapshot = await userDoc.get();
+
+        if (!docSnapshot.exists) {
+          final newUser = UserModel(
+            id: user.uid,
+            email: user.email ?? '',
+            displayName: user.displayName ?? '',
+            photoURL: user.photoURL,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+
+          await userDoc.set(newUser.toMap());
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      throw _mapFirebaseAuthExceptionToMessage(e);
+    } catch (e) {
+      throw 'Google sign-in failed: ${e.toString()}';
+    }
   }
 
   Future<void> updateProfile({
