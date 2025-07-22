@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:skrybe/data/models/transcript_model.dart';
+import 'package:skrybe/data/models/transcription_model.dart'; // Changed from transcript_model.dart
 
 class TranscriptionDetailScreen extends StatefulWidget {
-  final Transcript transcript;
-  final String transcriptionId; // Add this field
+  final TranscriptionModel
+      transcript; // Changed from Transcript to TranscriptionModel
+  final String transcriptionId;
 
   const TranscriptionDetailScreen({
     super.key,
     required this.transcript,
-    required this.transcriptionId, // Store transcriptionId as a field
+    required this.transcriptionId,
   });
 
   @override
@@ -58,7 +59,6 @@ class _TranscriptionDetailScreenState extends State<TranscriptionDetailScreen> {
                 if (!_isEditing) {
                   // Here you would update the title in your database
                   // For now, we're just updating the local state
-                  // widget.transcript.title = _titleController.text;
                 }
               });
             },
@@ -86,7 +86,7 @@ class _TranscriptionDetailScreenState extends State<TranscriptionDetailScreen> {
             ),
             const SizedBox(height: 8),
             SelectableText(
-              widget.transcript.text,
+              widget.transcript.content, // Changed from .text to .content
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ],
@@ -102,8 +102,9 @@ class _TranscriptionDetailScreenState extends State<TranscriptionDetailScreen> {
                 icon: Icons.content_copy,
                 label: 'Copy',
                 onTap: () {
-                  Clipboard.setData(
-                      ClipboardData(text: widget.transcript.text));
+                  Clipboard.setData(ClipboardData(
+                      text: widget.transcript
+                          .content)); // Changed from .text to .content
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Transcript copied to clipboard'),
@@ -206,7 +207,9 @@ class _TranscriptionDetailScreenState extends State<TranscriptionDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _formatDuration(widget.transcript.duration),
+                    _formatDuration((widget.transcript.duration is Duration)
+                        ? widget.transcript.duration as Duration
+                        : Duration.zero), // Handle nullable duration
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],

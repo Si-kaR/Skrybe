@@ -9,8 +9,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:skrybe/data/providers/transcript_provider.dart';
+import 'package:skrybe/data/providers/transcript_provider.dart'
+    as transcript_provider;
 import 'package:skrybe/features/transcription/screens/transcription_detail_screen.dart';
+import 'package:skrybe/data/models/transcription_model.dart';
+import 'package:skrybe/data/repositories/transcription_repository.dart';
 
 class UploadScreen extends ConsumerStatefulWidget {
   const UploadScreen({super.key});
@@ -94,7 +97,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => TranscriptionDetailScreen(
-            transcript: transcript, // Pass TranscriptionModel
+            transcript: transcript as TranscriptionModel,
             transcriptionId: transcript.id,
           ),
         ),

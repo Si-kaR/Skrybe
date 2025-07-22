@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:skrybe/data/models/transcript_model.dart';
+import 'package:skrybe/data/models/transcription_model.dart';
 
 class TranscriptCard extends StatelessWidget {
-  final Transcript transcript;
+  // final Transcript transcript;
+  final TranscriptionModel transcript;
   final VoidCallback onTap;
 
   const TranscriptCard({
@@ -47,12 +49,13 @@ class TranscriptCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  _buildStatusChip(context, transcript.status),
+                  _buildStatusChip(
+                      context, transcript.status as TranscriptStatus),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                transcript.text,
+                transcript.content,
                 style: Theme.of(context).textTheme.bodyMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -84,7 +87,10 @@ class TranscriptCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _formatDuration(transcript.duration),
+                        transcript.duration != null
+                            ? _formatDuration(
+                                Duration(seconds: transcript.duration!.round()))
+                            : 'N/A',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

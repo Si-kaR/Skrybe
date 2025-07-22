@@ -100,6 +100,32 @@ class TranscriptionModel extends Equatable {
     );
   }
 
+  factory TranscriptionModel.fromTranscript(Transcript transcript) {
+    return TranscriptionModel(
+      id: transcript.id,
+      userId: transcript.userId ?? '',
+      title: transcript.title,
+      description: transcript.description,
+      content: transcript
+          .text, // Transcript uses 'text', TranscriptionModel uses 'content'
+      rawaudioUrl: transcript.audioUrl,
+      rawvideoUrl: transcript.videoUrl,
+      createdAt: transcript.createdAt,
+      updatedAt: transcript.updatedAt ?? DateTime.now(),
+      status: TranscriptionStatus
+          .completed, // or map from transcript.status if it exists
+      source: TranscriptionSource
+          .recording, // or map from transcript.source if it exists
+      duration: transcript.duration?.inSeconds
+          .toDouble(), // Convert Duration to double
+      speakers: transcript.speakers,
+      // metadata: transcript.metadata, // Removed because 'metadata' does not exist on Transcript
+      tags: transcript.tags,
+      isFavorite: transcript.isFavorite ?? false,
+      isDeleted: transcript.isDeleted ?? false,
+      isSynced: true,
+    );
+  }
   factory TranscriptionModel.fromLocal(Map<String, dynamic> data) {
     return TranscriptionModel(
       id: data['id'],
@@ -324,6 +350,17 @@ class TranscriptionModel extends Equatable {
 final transcriptionServiceProvider = Provider<TranscriptionService>((ref) {
   return TranscriptionService();
 });
+
+// final transcriptionRepositoryProvider =
+//     Provider<TranscriptionRepository>((ref) {
+//   return TranscriptionRepository(
+//     firestore: FirebaseFirestore.instance,
+//     storage: FirebaseStorage.instance,
+//     auth: FirebaseAuth.instance,
+//     functions: FirebaseFunctions.instance,
+//     transcriptionService: ref.watch(transcriptionServiceProvider),
+//   );
+// });
 
 final transcriptionRepositoryProvider =
     Provider<TranscriptionRepository>((ref) {

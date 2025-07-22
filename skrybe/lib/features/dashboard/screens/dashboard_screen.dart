@@ -134,7 +134,7 @@ class _HomeContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transcriptsAsyncValue = ref.watch(transcriptionRepositoryProvider);
+    final transcriptsAsyncValue = ref.watch(transcriptionsStreamProvider);
 
     return transcriptsAsyncValue.when(
       loading: () => const Center(child: CircularProgressIndicator()),

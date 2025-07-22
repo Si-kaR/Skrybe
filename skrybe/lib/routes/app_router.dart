@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skrybe/core/utils/transition_animations.dart';
 import 'package:skrybe/data/models/transcript_model.dart';
+import 'package:skrybe/data/models/transcription_model.dart';
 import 'package:skrybe/data/providers/auth_provider.dart';
 import 'package:skrybe/features/auth/screens/forgot_password_screen.dart';
 import 'package:skrybe/features/auth/screens/login_screen.dart';
@@ -266,7 +267,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: TranscriptionDetailScreen(
-              transcript: transcript,
+              transcript: TranscriptionModel.fromTranscript(transcript),
               transcriptionId: '',
             ),
             transitionsBuilder: slideTransition,

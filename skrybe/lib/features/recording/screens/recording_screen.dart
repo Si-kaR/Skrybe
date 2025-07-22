@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:skrybe/core/services/recording_service.dart';
-import 'package:skrybe/data/providers/transcript_provider.dart';
+import 'package:skrybe/data/models/transcription_model.dart';
+import 'package:skrybe/data/providers/transcript_provider.dart'
+    as transcript_provider;
 import 'package:skrybe/features/transcription/screens/transcription_detail_screen.dart';
 import 'package:skrybe/features/dashboard/screens/dashboard_screen.dart';
 import 'package:path_provider/path_provider.dart';
@@ -256,7 +258,8 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen>
     switch (action) {
       case RecordingAction.transcribe:
         try {
-          final repository = ref.read(transcriptionRepositoryProvider);
+          final repository =
+              ref.read(transcript_provider.transcriptionRepositoryProvider);
           final transcript = await repository.transcribeAudioFile(
             _recordingPath!,
             title: _titleController.text,
@@ -269,7 +272,8 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen>
             context,
             MaterialPageRoute(
               builder: (context) => TranscriptionDetailScreen(
-                transcript: transcript,
+                // transcript: transcript,
+                transcript: TranscriptionModel.fromTranscript(transcript),
                 transcriptionId: transcript.id,
               ),
             ),
