@@ -333,21 +333,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       title: 'Record Audio',
       description:
           'Capture high-quality audio and get real-time transcription with just a tap.',
-      lottieAsset: 'asssets/animations/record.json',
+      lottieAsset: 'assets/animations/record.json',
       color: const Color(0xFF6C63FF),
     ),
     OnboardingItem(
       title: 'Upload Files',
       description:
           'Import audio and video files from your device to transcribe instantly.',
-      lottieAsset: 'asssets/animations/uploading.json',
+      lottieAsset: 'assets/animations/uploading.json',
       color: const Color(0xFF4CAF50),
     ),
     OnboardingItem(
       title: 'View Transcripts',
       description:
           'Access, edit, and share your transcripts in multiple formats.',
-      lottieAsset: 'asssets/animations/documents.json',
+      lottieAsset: 'assets/animations/documents.json',
       color: const Color(0xFFFF9800),
     ),
   ];

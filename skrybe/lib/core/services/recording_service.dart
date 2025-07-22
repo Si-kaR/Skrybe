@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:record_platform_interface/record_platform_interface.dart';
 import 'package:uuid/uuid.dart';
 
 // Import Record properly

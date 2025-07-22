@@ -211,20 +211,19 @@ class _TranscriptionDetailScreenState extends State<TranscriptionDetailScreen> {
                   ),
                 ],
               ),
-              if (widget.transcript.audioUrl != null)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.play_arrow, size: 16),
-                  label: const Text('Play Audio'),
-                  onPressed: () {
-                    // Implement audio playback
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.play_arrow, size: 16),
+                label: const Text('Play Audio'),
+                onPressed: () {
+                  // Implement audio playback
+                },
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
+              ),
             ],
           ),
         ],

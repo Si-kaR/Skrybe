@@ -27,7 +27,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     super.initState();
     // Initialize video player
     _videoController =
-        VideoPlayerController.asset('asssets/videos/WelcomeScreen.mp4')
+        VideoPlayerController.asset('assets/videos/WelcomeScreen.mp4')
           ..initialize().then((_) {
             // Ensure the first frame is shown
             if (mounted) {
@@ -133,7 +133,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          'asssets/logo/lop1.jpeg', // Keep the original logo
+                          'assets/logo/lop1.jpeg', // Keep the original logo
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -279,7 +279,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'asssets/icons/g-logo.png', // Ensure this asset exists
+              'assets/icons/g-logo.png', // Ensure this asset exists
               height: 24,
               width: 24,
               errorBuilder: (context, error, stackTrace) {

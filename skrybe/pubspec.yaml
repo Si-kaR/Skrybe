@@ -160,9 +160,9 @@ dev_dependencies:
 
 flutter_native_splash:
   color: "#ffffff"
-  image: asssets/images/splash_logo.png
+  image: assets/images/splash_logo.png
   color_dark: "#121212"
-  image_dark: asssets/images/splash_logo_dark.png
+  image_dark: assets/images/splash_logo_dark.png
   android: true
   ios: true
 # # For information on the generic Dart part of this file, see the
@@ -177,24 +177,34 @@ flutter:
 #   uses-material-design: true
   uses-material-design: true
 
+  assets:
+    - assets/
+    - assets/logo/
+    - assets/images/
+    - assets/fonts/
+    - assets/icons/
+    - assets/audio/
+    - assets/videos/
+    - assets/lottie/
+    - assets/sounds/
+    - assets/translations/
+
 flutter_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "asssets/images/splash_logo.png"
+  image_path: "assets/images/splash_logo.png"
   adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "asssets/images/splash_logo_foreground.png"
+  adaptive_icon_foreground: "assets/images/splash_logo_foreground.png"
 
-#   # To add asssets to your application, add an asssets section, like this:
-#   # asssets:
+#   # To add assets to your application, add an assets section, like this:
+#   # assets:
 #   #   - images/a_dot_burr.jpeg
 #   #   - images/a_dot_ham.jpeg
-  assets:
-    - asssets/
 
 #   # An image asset can refer to one or more resolution-specific "variants", see
 #   # https://flutter.dev/to/resolution-aware-images
 
-#   # For details regarding adding asssets from package dependencies, see
+#   # For details regarding adding assets from package dependencies, see
 #   # https://flutter.dev/to/asset-from-package
 
 #   # To add custom fonts to your application, add a fonts section here,

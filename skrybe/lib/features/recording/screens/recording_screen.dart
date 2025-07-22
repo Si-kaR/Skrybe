@@ -30,7 +30,7 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen>
   Duration _recordingDuration = Duration.zero;
   StreamSubscription? _durationSubscription;
   StreamSubscription? _amplitudeSubscription;
-  List<double> _amplitudeData = List.generate(60, (_) => 0.0);
+  final List<double> _amplitudeData = List.generate(60, (_) => 0.0);
 
   // Animation controllers
   late AnimationController _pulseController;
@@ -165,7 +165,7 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen>
 
       // Listen to amplitude updates for waveform
       _amplitudeSubscription =
-          _recordingService.amplitudeStream?.listen((amplitude) {
+          _recordingService.amplitudeStream.listen((amplitude) {
         if (mounted) {
           setState(() {
             // Normalize amplitude (adjust as needed)
@@ -263,17 +263,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen>
           );
 
           if (!mounted) return;
-
-          if (transcript == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to transcribe recording'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-            return;
-          }
 
           // Navigate to the transcript detail screen
           Navigator.pushReplacement(
@@ -790,8 +779,8 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen>
                         const DashboardScreen(child: SizedBox())),
               );
             },
-            child: const Text('DISCARD'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('DISCARD'),
           ),
         ],
       ),

@@ -9,7 +9,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:skrybe/data/models/transcript_model.dart';
-import 'package:skrybe/data/models/transcription_model.dart';
 import 'package:uuid/uuid.dart';
 
 class TranscriptionService {

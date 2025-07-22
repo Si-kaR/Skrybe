@@ -90,19 +90,15 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
       if (!mounted) return;
 
-      if (transcript != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TranscriptionDetailScreen(
-              transcript: transcript, // Pass TranscriptionModel
-              transcriptionId: transcript.id,
-            ),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TranscriptionDetailScreen(
+            transcript: transcript, // Pass TranscriptionModel
+            transcriptionId: transcript.id,
           ),
-        );
-      } else {
-        _showErrorDialog('Failed to process audio file');
-      }
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       _showErrorDialog('Error: $e');

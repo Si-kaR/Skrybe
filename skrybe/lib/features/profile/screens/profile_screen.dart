@@ -367,7 +367,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildInfoItem(IconData icon, String label, String value) {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -396,7 +396,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildThemeSelector(ThemeMode currentThemeMode) {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

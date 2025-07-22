@@ -1,9 +1,7 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -11,7 +9,6 @@ import 'package:uuid/uuid.dart';
 
 // Replaceed ffmpeg_kit with media_kit
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 
 import 'package:skrybe/data/models/transcription_model.dart';
 import 'package:skrybe/data/models/transcript_model.dart';

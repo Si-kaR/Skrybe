@@ -87,7 +87,7 @@ class ErrorScreen extends StatelessWidget {
   Widget _buildLottieOrFallback(BuildContext context) {
     try {
       return Lottie.asset(
-        'asssets/animations/errorb.json',
+        'assets/animations/errorb.json',
         width: 200,
         height: 200,
         errorBuilder: (context, error, stackTrace) {
