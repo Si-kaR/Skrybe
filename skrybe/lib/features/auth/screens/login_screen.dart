@@ -1,5 +1,7 @@
 // lib/features/auth/screens/login_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -381,53 +383,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  // Widget _buildGoogleSignInButton(BuildContext context, WidgetRef ref) {
-  //   return InkWell(
-  //     onTap: () => _signInWithGoogle(context, ref),
-  //     borderRadius: BorderRadius.circular(30),
-  //     child: Container(
-  //       height: 56,
-  //       decoration: BoxDecoration(
-  //         color: Colors.white,
-  //         borderRadius: BorderRadius.circular(30),
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: Colors.black.withOpacity(0.05),
-  //             spreadRadius: 1,
-  //             blurRadius: 5,
-  //             offset: const Offset(0, 2),
-  //           ),
-  //         ],
-  //       ),
-  //       child: Row(
-  //         mainAxisAlignment: MainAxisAlignment.center,
-  //         children: [
-  //           Image.asset(
-  //             'assets/icons/google_logo.svg', // Ensure this asset exists
-  //             height: 24,
-  //             width: 24,
-  //             errorBuilder: (context, error, stackTrace) {
-  //               return const Icon(
-  //                 Icons.g_mobiledata,
-  //                 size: 24,
-  //                 color: Colors.red,
-  //               );
-  //             },
-  //           ),
-  //           const SizedBox(width: 12),
-  //           const Text(
-  //             'Continue with Google',
-  //             style: TextStyle(
-  //               color: Color(0xFF4285F4),
-  //               fontWeight: FontWeight.w500,
-  //               fontSize: 16,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
   Widget _buildGoogleSignInButton(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDarkMode ? Colors.white : const Color(0xFF2C3E50);
@@ -491,12 +446,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  // Future<void> _signInWithGoogle(BuildContext context, WidgetRef ref) async {
+  //   try {
+  //     final authRepository = ref.read(authRepositoryProvider);
+  //     await authRepository.signInWithGoogle();
+
+  //     // Add this code to mark welcome as completed
+  //     try {
+  //       final settingsBox = await Hive.openBox('settings');
+  //       await settingsBox.put('welcomeCompleted', true);
+  //     } catch (e) {
+  //       debugPrint('❌ Error marking welcome as completed: $e');
+  //     }
+
+  //     // Change the route to dashboard
+  //     if (context.mounted) {
+  //       context.go(RouteNames.dashboard);
+  //     }
+  //   } catch (e) {
+  //     if (context.mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
+
   Future<void> _signInWithGoogle(BuildContext context, WidgetRef ref) async {
     try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Signing in with Google...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signInWithGoogle();
 
-      // Add this code to mark welcome as completed
+      // Mark welcome as completed
       try {
         final settingsBox = await Hive.openBox('settings');
         await settingsBox.put('welcomeCompleted', true);
@@ -504,16 +506,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('❌ Error marking welcome as completed: $e');
       }
 
-      // Change the route to dashboard
+      // Navigate to dashboard
       if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         context.go(RouteNames.dashboard);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Authentication failed: ${e.message}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } on PlatformException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        String errorMessage = 'Sign-in failed';
+
+        switch (e.code) {
+          case 'sign_in_failed':
+            errorMessage =
+                'Google sign-in failed. Please check your internet connection and try again.';
+            break;
+          case 'network_error':
+            errorMessage = 'Network error. Please check your connection.';
+            break;
+          default:
+            errorMessage = 'Sign-in failed: ${e.message}';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('An unexpected error occurred: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

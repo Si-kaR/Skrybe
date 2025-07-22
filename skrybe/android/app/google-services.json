@@ -12,7 +12,20 @@
           "package_name": "com.example.skrybe"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "706457137235-n77o7prko1dctoktut0di6nk1scbnq7j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.skrybe",
+            "certificate_hash": "b7e8a52454727ac0327e73e6d22c49b3e17a8de1"
+          }
+        },
+        {
+          "client_id": "706457137235-ckumupce9q5pih6rhgm87kgjm02d5t7r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAGOzGiXp94m913OQ3kPO3Ulsimfp1w0U0"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "706457137235-ckumupce9q5pih6rhgm87kgjm02d5t7r.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "706457137235-hfbst7t6fk6197mnth1gd0cut8bouurc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.skrybe"
+              }
+            }
+          ]
         }
       }
     }
