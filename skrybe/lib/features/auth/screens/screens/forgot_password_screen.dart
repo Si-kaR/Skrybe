@@ -352,7 +352,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'Please check your inbox and follow the instructions to reset your password.',
+                'Please check your spam folder and follow the instructions to reset your password.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
