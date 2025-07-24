@@ -1,4 +1,4 @@
-# Skrybe – Your Smart Mobile Transcription Assistant
+# Skrybe – Smart Transcription Assistant - Mobile App
 
 **Skrybe** is an mobile transcription app designed to convert audio and video content into accurate, editable text. Whether you're recording live audio or uploading existing media, Skrybe is designed to offer seamless transcription with modern UI, offline support, and AI-powered enhancements.
 
