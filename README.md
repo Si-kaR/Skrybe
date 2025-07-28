@@ -43,4 +43,4 @@ Skrybe is still under development. Stay tuned for updates, contributions, and pr
 
 ---
 
-> Building Skrybe into the gold standard of transcription apps. Contributions welcome thought I want to do it on my own!!!
+> Building Skrybe into a good standard of transcription apps. Contributions are welcome though I want to do it on my own!!!
